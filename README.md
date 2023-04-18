@@ -10,6 +10,9 @@ The images are configured with deb package management. Additional packages can
 be installed via the apt tool (you should first run ```apt update```). packages 
 are hosted at the same above site. 
 
+Do burn these images, us [Balena Etcha](https://github.com/balena-io/etcher) or 
+dd.
+
 For additional packages not present, please submit a issue request, i'll do my 
 best to find a recipe to include those packages.
 
