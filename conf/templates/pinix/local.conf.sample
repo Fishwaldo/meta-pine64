@@ -215,7 +215,7 @@ BB_DISKMON_DIRS ??= "\
 # at the end as shown in the examples below. This will be substituted with the
 # correct path within the directory structure.
 SSTATE_MIRRORS ?= "\
-file://.* https://pine64.my-ho.st:8443/sstate/PATH;downloadfilename=PATH \
+file://.* https://pine64.my-ho.st:8443/sstate-pine64/PATH;downloadfilename=PATH \
 "
 
 #
