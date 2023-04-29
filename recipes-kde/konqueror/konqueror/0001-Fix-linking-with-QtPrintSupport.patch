@@ -1,0 +1,21 @@
+From ce8c1d569f398a700419e92875ac681910e1a9e5 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Fri, 28 Apr 2023 16:08:17 +0800
+Subject: [PATCH] Fix linking with QtPrintSupport
+
+---
+ webenginepart/src/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/webenginepart/src/CMakeLists.txt b/webenginepart/src/CMakeLists.txt
+index a65a80fc6..e8bebb341 100644
+--- a/webenginepart/src/CMakeLists.txt
++++ b/webenginepart/src/CMakeLists.txt
+@@ -3,6 +3,7 @@ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS Notifications )
+ find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS Sonnet)
+ 
+ find_package(Hunspell)
++find_package(Qt5 REQUIRED COMPONENTS PrintSupport)
+ 
+ add_definitions(-DTRANSLATION_DOMAIN=\"webenginepart\")
+ 

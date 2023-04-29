@@ -1,0 +1,34 @@
+From 0daecef3dca30f0adc613228b70f426e71056f5b Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Wed, 26 Apr 2023 12:19:59 +0800
+Subject: [PATCH] add riscv64 support
+
+---
+ configure.pri                  | 1 +
+ mkspecs/features/functions.prf | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/configure.pri b/configure.pri
+index e072961f0..d8f385cf0 100644
+--- a/configure.pri
++++ b/configure.pri
+@@ -144,6 +144,7 @@ defineTest(qtConfTest_detectArch) {
+     contains(QT_ARCH, "arm")|contains(QT_ARCH, "arm64"): return(true)
+     contains(QT_ARCH, "mips"): return(true)
+     contains(QT_ARCH, "mips64"): return(true)
++    contains(QT_ARCH, "riscv64"): return(true)
+     qtLog("Architecture not supported.")
+     return(false)
+ }
+diff --git a/mkspecs/features/functions.prf b/mkspecs/features/functions.prf
+index 7f630588a..07b812f4b 100644
+--- a/mkspecs/features/functions.prf
++++ b/mkspecs/features/functions.prf
+@@ -112,6 +112,7 @@ defineReplace(gnArch) {
+     contains(qtArch, "mips"): return(mipsel)
+     contains(qtArch, "mips64"): return(mips64el)
+     contains(qtArch, "mips64el"): return(mips64el)
++    contains(qtArch, "riscv64"): return(riscv64)
+     return(unknown)
+ }
+ 

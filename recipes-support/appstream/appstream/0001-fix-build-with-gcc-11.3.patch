@@ -1,0 +1,22 @@
+From 3eecf18c4e63e067947981c74f503c16d20bb2ba Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Fri, 28 Apr 2023 11:28:43 +0800
+Subject: [PATCH] fix build with gcc 11.3
+
+---
+ meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 8efebd0..5d740fd 100644
+--- a/meson.build
++++ b/meson.build
+@@ -134,7 +134,7 @@ add_project_arguments(
+   '-Werror=format-security',
+ 
+   # NOTE: Can be removed with AppStream 1.0
+-  '-Wno-error=c++20-compat',
++  #'-Wno-error=c++20-compat',
+   language: 'cpp'
+ )
+ 

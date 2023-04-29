@@ -2,20 +2,11 @@ SUMMARY = "A small commandline only image for Star64"
 
 inherit core-image extrausers
 
-P64_PACKAGES_MINIMAL = "resize-rootfs \
-                        mc \
-                        joe \
-                        ca-certificates \
-                        networkmanager \
-                        wpa-supplicant \
-                        avahi-daemon \
-                        networkmanager-nmtui \
-                        "
 
 IMAGE_INSTALL = "packagegroup-core-boot \
                 packagegroup-core-full-cmdline \
                 ${CORE_IMAGE_EXTRA_INSTALL} \
-                ${P64_PACKAGES_MINIMAL} \
+                packagegroup-star64-minimal \
                 "
 
 IMAGE_FEATURES += " splash \

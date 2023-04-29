@@ -1,0 +1,1 @@
+COMPATIBLE_MACHINE:riscv64 = "(jh7110)"

@@ -1,0 +1,4 @@
+DEPENDS:append = " \
+    appstream \
+    kuserfeedback \
+"

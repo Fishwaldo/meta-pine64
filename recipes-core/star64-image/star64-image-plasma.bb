@@ -8,12 +8,6 @@ IMAGE_FEATURES += "splash package-management ssh-server-dropbear hwcodecs weston
 LICENSE = "MIT"
 
 
-IMAGE_INSTALL += " wayland \
-                   weston \
-                   dbus \
-                   sddm \
-                   sddm-config-plasma-bigscreen \
-                   packagegroup-plasma-bigscreen-workspace \
-                   packagegroup-core-x11-utils \
-                   systemd \                    
+IMAGE_INSTALL += " \
+    packagegroup-star64-plasma \
 "
