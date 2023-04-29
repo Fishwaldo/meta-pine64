@@ -1,0 +1,25 @@
+From 3bcf0fbf9248684b555f0f0eee57bd0633ea29f6 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Sat, 29 Apr 2023 16:23:42 +0800
+Subject: [PATCH] fix riscv64 build
+
+---
+ chromium/v8/BUILD.gn | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/chromium/v8/BUILD.gn b/chromium/v8/BUILD.gn
+index 100e43688f8..f1d373ea3c4 100644
+--- a/chromium/v8/BUILD.gn
++++ b/chromium/v8/BUILD.gn
+@@ -4409,6 +4409,8 @@ v8_source_set("v8_cppgc_shared") {
+       sources += [ "src/heap/base/asm/mips/push_registers_asm.cc" ]
+     } else if (current_cpu == "mips64el") {
+       sources += [ "src/heap/base/asm/mips64/push_registers_asm.cc" ]
++    } else if (current_cpu == "riscv64") {
++      sources += [ "src/heap/base/asm/riscv64/push_registers_asm.cc" ]
+     }
+   } else if (is_win) {
+     if (current_cpu == "x64") {
+-- 
+2.31.1
+
