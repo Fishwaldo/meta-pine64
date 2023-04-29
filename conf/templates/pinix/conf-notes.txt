@@ -1,0 +1,11 @@
+Bitbake Setup for PinIx
+
+You can now build. Some sample images:
+
+* star64-image-minimal
+* star64-image-weston
+* star64-image-plasma
+
+Start a build with:
+
+`bitbake <imagename>` or `bitbake <package>`
