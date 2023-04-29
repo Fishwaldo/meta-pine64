@@ -21,6 +21,9 @@ RDEPENDS:packagegroup-star64-minimal = " \
     ntpdate \
     tzdata \
     udev-rules-star64 \
+    openssh \
+    wget \
+    curl \
 "
 
 RDEPENDS:packagegroup-star64-weston = " \
