@@ -11,6 +11,7 @@ IMAGE_INSTALL = "packagegroup-core-boot \
 
 IMAGE_FEATURES += " splash \
                     package-management \
+                    ssh-server-openssh \
 "
 
 IMAGE_VERSION_SUFFIX = "-${DISTRO_VERSION}"
