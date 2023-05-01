@@ -1,39 +1,10 @@
-DESCRIPTION = "Minimal Star64 Packages"
+DESCRIPTION = "Plasma Star64 Packages"
 
 inherit packagegroup
 
 PACKAGES = " \
-    packagegroup-star64-minimal \
-    packagegroup-star64-weston \
     packagegroup-star64-plasma \
 "
-
-
-RDEPENDS:packagegroup-star64-minimal = " \
-    resize-rootfs \
-    mc \
-    joe \
-    ca-certificates \
-    networkmanager \
-    wpa-supplicant \
-    avahi-daemon \
-    networkmanager-nmtui \
-    ntpdate \
-    tzdata \
-    udev-rules-star64 \
-    openssh \
-    wget \
-    curl \
-"
-
-RDEPENDS:packagegroup-star64-weston = " \
-    packagegroup-star64-minimal \
-    gtk+3-demo \
-    weston \
-    sddm \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'weston-xwayland matchbox-terminal', '', d)} \
-"
-
 RDEPENDS:packagegroup-star64-plasma = " \
     packagegroup-star64-minimal \
     wayland \

@@ -10,7 +10,7 @@ BBLAYERS ?= " \
   ##OEROOT##/../poky/meta-poky \
   ##OEROOT##/../poky/meta-yocto-bsp \
   ##OEROOT##/../meta-riscv \
-  ##OEROOT##/../.. \
+  ##OEROOT##/../../../meta-pine64 \
   ##OEROOT##/../meta-openembedded/meta-oe \
   ##OEROOT##/../meta-openembedded/meta-python \
   ##OEROOT##/../meta-openembedded/meta-networking \

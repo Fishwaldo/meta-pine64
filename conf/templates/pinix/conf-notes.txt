@@ -1,5 +1,9 @@
 Bitbake Setup for PinIx
 
+Using Shared State Cache at pine64.my-ho.st to speed up builds on x86_64
+
+By Default, this will create binaries/images for the Star64 Device. To build for different platforms, please use MACHINE="<machinename>" bitbake <command>
+
 You can now build. Some sample images:
 
 * star64-image-minimal
