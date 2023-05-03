@@ -19,6 +19,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kactivitymanagerd \
     kde-cli-tools \
     kdecoration \
+    kdeplasma-addons \
     kscreen \
     kscreenlocker \
     kwayland-integration \
@@ -34,6 +35,12 @@ RDEPENDS:packagegroup-star64-plasma = " \
     polkit-kde-agent-1 \
     plasma-settings \
     plasma-systemmonitor \
+    plasma-vault \
+    plasma-workspace-wallpapers \
+    plasma-firewall \
+    plasma-sdk \
+    plasma-disks \
+    plasma-browser-integration \
     xdg-desktop-portal-kde \
     kclock \
     kweather \
