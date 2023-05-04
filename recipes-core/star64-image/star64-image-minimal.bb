@@ -20,7 +20,7 @@ LICENSE = "MIT"
 
 IMAGE_ROOTFS_SIZE ?= "8192"
 
-IMAGE_FSTYPES = "wic.bz2"
+IMAGE_FSTYPES = "wic.bz2 wic"
 
 #password is "pine64"
 PASSWD = "\$5\$svJwM1eWQPV5bb\$CgKgw8mrSVcZEBPR1re37qeShy/scdk5GMbKZaSln74"

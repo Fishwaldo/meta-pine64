@@ -1,5 +1,7 @@
 DESCRIPTION = "Plasma Star64 Packages"
 
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
+
 inherit packagegroup
 
 PACKAGES = " \
@@ -24,6 +26,9 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kscreenlocker \
     kwayland-integration \
     kwin \
+    kdeplasma-addons \
+    kpipewire \
+    kirigami-addons \
     libkscreen \
     libksysguard \
     milou \

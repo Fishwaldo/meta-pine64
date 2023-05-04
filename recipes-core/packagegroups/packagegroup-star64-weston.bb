@@ -1,5 +1,7 @@
 DESCRIPTION = "Weston Star64 Packages"
 
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
+
 inherit packagegroup
 
 PACKAGES = " \

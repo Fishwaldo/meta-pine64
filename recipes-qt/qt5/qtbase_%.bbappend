@@ -19,3 +19,4 @@ PACKAGECONFIG:append:class-target = " \
     eglfs \
 "
 #PACKAGECONFIG:remove = "tests"
+OPENSSL_LINKING_MODE = "-linked"

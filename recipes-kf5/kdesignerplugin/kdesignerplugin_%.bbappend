@@ -4,3 +4,8 @@ do_install:append:class-target() {
         sed -i 's#'\$\{_IMPORT_PREFIX\}'#\$\{OE_KF5_PATH_HOST_ROOT\}/usr/#g' $(find . -name "*.cmake" | grep '_usr\|Export' | grep 'noconfig' )
     fi
 }
+
+RDEPENDS:${PN}:class-native += " \
+    kconfig \
+    kcoreaddons \
+"

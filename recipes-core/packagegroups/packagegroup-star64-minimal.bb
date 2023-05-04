@@ -1,5 +1,7 @@
 DESCRIPTION = "Minimal Star64 Packages"
 
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
+
 inherit packagegroup
 
 PACKAGES = " \
@@ -21,4 +23,6 @@ RDEPENDS:packagegroup-star64-minimal = " \
     udev-rules-star64 \
     wget \
     curl \
+    packagekit \
+    firewalld \
 "
