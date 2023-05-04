@@ -31,6 +31,7 @@ layers['yocto-meta-kf5']='https://github.com/KDE/yocto-meta-kf5.git|master|28828
 layers['yocto-meta-kde']='https://github.com/KDE/yocto-meta-kde.git|master|e533c2bf3133cc3fec6f78104ed0839fd84e2165'
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
 layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'
+layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|92cb1be5c146296469b5b5211aba94bc756fb1b1'
 
 echo "Checking Layers..."
 echo ""

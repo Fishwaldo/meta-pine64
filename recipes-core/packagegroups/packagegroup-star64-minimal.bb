@@ -25,4 +25,5 @@ RDEPENDS:packagegroup-star64-minimal = " \
     curl \
     packagekit \
     firewalld \
+    pciutils \
 "

@@ -9,9 +9,12 @@ PACKAGES = " \
 "
 RDEPENDS:packagegroup-star64-plasma = " \
     packagegroup-star64-minimal \
+    packagegroup-kde-gear \
     wayland \
     dbus \
+    drkonqi \
     sddm \
+    sddm-kcm \
     systemd \
     liberation-fonts \
     ttf-noto \
@@ -22,6 +25,10 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kde-cli-tools \
     kdecoration \
     kdeplasma-addons \
+    kinfocenter \
+    kgamma5 \
+    khotkeys \
+    kmenuedit \
     kscreen \
     kscreenlocker \
     kwayland-integration \
@@ -29,6 +36,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kdeplasma-addons \
     kpipewire \
     kirigami-addons \
+    ksystemstats \
     libkscreen \
     libksysguard \
     milou \
