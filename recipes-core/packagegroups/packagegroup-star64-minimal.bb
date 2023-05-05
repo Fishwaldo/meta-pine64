@@ -26,4 +26,7 @@ RDEPENDS:packagegroup-star64-minimal = " \
     packagekit \
     firewalld \
     pciutils \
+    packagefeed \
+    alsa-utils \
+    gnupg \
 "

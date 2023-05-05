@@ -13,6 +13,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     wayland \
     dbus \
     drkonqi \
+    firewalld-applet \
     sddm \
     sddm-kcm \
     systemd \
@@ -54,6 +55,8 @@ RDEPENDS:packagegroup-star64-plasma = " \
     plasma-sdk \
     plasma-disks \
     plasma-browser-integration \
+    pulseaudio \
+    pulseaudio-server \
     xdg-desktop-portal-kde \
     kclock \
     kweather \
@@ -68,5 +71,6 @@ RDEPENDS:packagegroup-star64-plasma = " \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
-    gstreamer1.0-plugins-ugly \                                
+    gstreamer1.0-plugins-ugly \
+    udisks2 \                                
 "
