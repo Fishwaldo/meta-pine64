@@ -1,0 +1,13 @@
+[KDE]
+LookAndFeelPackage=Wings-Dark-Global
+widgetStyle=kvantum-dark
+
+[General]
+ColorScheme=WingsQueenBlueDarkColor
+
+[Icons]
+Theme=Wings-Dark-Icons
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=/usr/share/wallpapers/WingsDark/
+PreviewImage=/usr/share/wallpapers/WingsDark/

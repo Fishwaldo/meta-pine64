@@ -30,6 +30,10 @@ DEPENDS = " \
     pciutils \ 
 "
 
+RDEPENDS:${PN} = " \
+    systemsettings \
+    wayland-utils \
+"
 KF5_REUSE_LICENSECHECK_ENABLED="1"
 
 FILES:${PN} += " \

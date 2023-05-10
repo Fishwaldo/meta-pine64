@@ -1,0 +1,21 @@
+From 1fbcc602140c6e2d8ba6904f4a18162f9bf2c6b6 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Tue, 9 May 2023 13:49:18 +0800
+Subject: [PATCH] fix include
+
+---
+ src/llvm-project/llvm/include/llvm/Support/Signals.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/llvm-project/llvm/include/llvm/Support/Signals.h b/src/llvm-project/llvm/include/llvm/Support/Signals.h
+index 44f5a750f..ccb429bdd 100644
+--- a/src/llvm-project/llvm/include/llvm/Support/Signals.h
++++ b/src/llvm-project/llvm/include/llvm/Support/Signals.h
+@@ -15,6 +15,7 @@
+ #define LLVM_SUPPORT_SIGNALS_H
+ 
+ #include <string>
++#include <cstdint>
+ 
+ namespace llvm {
+ class StringRef;

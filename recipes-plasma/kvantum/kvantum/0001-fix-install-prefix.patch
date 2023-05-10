@@ -1,0 +1,40 @@
+From e279f0f1aa42bb74744e235049c00d49798d9e89 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Sat, 6 May 2023 16:42:04 +0800
+Subject: [PATCH] fix install prefix
+
+---
+ Kvantum/style/CMakeLists.txt | 14 ++------------
+ 1 file changed, 2 insertions(+), 12 deletions(-)
+
+diff --git a/Kvantum/style/CMakeLists.txt b/Kvantum/style/CMakeLists.txt
+index 215a45e1..b641ba3b 100644
+--- a/Kvantum/style/CMakeLists.txt
++++ b/Kvantum/style/CMakeLists.txt
+@@ -34,24 +34,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
+ #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
+ 
+ if(QT_VERSION_MAJOR EQUAL 6)
+-  get_target_property(REAL_QMAKE_EXECUTABLE Qt6::qmake
+-                      IMPORTED_LOCATION)
+-  execute_process(COMMAND "${REAL_QMAKE_EXECUTABLE}" -query QT_INSTALL_PLUGINS
+-                  OUTPUT_VARIABLE _Qt6_PLUGIN_INSTALL_DIR
+-                  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+-  set(KVANTUM_STYLE_DIR "${_Qt6_PLUGIN_INSTALL_DIR}/styles/")
++  set(KVANTUM_STYLE_DIR "${CMAKE_INSTALL_PREFIX}/lib/plugins/styles/")
+ 
+   include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+                       ${Qt6Core_INCLUDE_DIRS} ${Qt6Widgets_INCLUDE_DIRS}
+                       ${Qt6Gui_INCLUDE_DIRS} ${Qt6Svg_INCLUDE_DIRS}
+                       ${X11_INCLUDE_DIR})
+ elseif(QT_VERSION_MAJOR EQUAL 5)
+-  get_target_property(REAL_QMAKE_EXECUTABLE ${Qt5Core_QMAKE_EXECUTABLE}
+-                      IMPORTED_LOCATION)
+-  execute_process(COMMAND "${REAL_QMAKE_EXECUTABLE}" -query QT_INSTALL_PLUGINS
+-                  OUTPUT_VARIABLE _Qt5_PLUGIN_INSTALL_DIR
+-                  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+-  set(KVANTUM_STYLE_DIR "${_Qt5_PLUGIN_INSTALL_DIR}/styles/")
++  set(KVANTUM_STYLE_DIR "${CMAKE_INSTALL_PREFIX}/lib/plugins/styles/")
+ 
+   include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+                       ${Qt5Core_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS}

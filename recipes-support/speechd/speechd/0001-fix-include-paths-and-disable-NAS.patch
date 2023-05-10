@@ -1,0 +1,49 @@
+From c0038f1e54c1b55e88831c55edb60d0cb7bfd759 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Sun, 7 May 2023 17:00:51 +0800
+Subject: [PATCH] fix include paths and disable NAS
+
+---
+ configure.ac                | 15 ---------------
+ src/clients/say/Makefile.am |  2 +-
+ 2 files changed, 1 insertion(+), 16 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index e83a2ade..34f90796 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -443,21 +443,6 @@ AS_IF([test $with_oss != "no"],
+ AM_CONDITIONAL([oss_support], [test $with_oss = "yes"])
+ AS_IF([test $with_oss = "yes"], [audio_methods="${audio_methods} oss"])
+ 
+-# check for NAS support
+-AC_ARG_WITH([nas],
+-	[AS_HELP_STRING([--with-nas], [include network audio system (nas) support])],
+-	[],
+-	[with_nas=check])
+-AS_IF([test $with_nas != "no"],
+-	[AC_CHECK_LIB([audio], [AuOpenServer],
+-		[with_nas=yes
+-		AS_IF([test -z "$default_audio_method"],
+-			[default_audio_method=nas])
+-		audio_dlopen_modules="$audio_dlopen_modules -dlopen ../audio/spd_nas.la";
+-		NAS_LIBS="-L/usr/X11R6/lib -lXau -laudio"],
+-		[AS_IF([test $with_nas = "yes"],
+-			[AC_MSG_FAILURE([nas is not available])])],
+-	[-L/usr/X11R6/lib -lXau])])
+ AM_CONDITIONAL([nas_support], [test $with_nas = "yes"])
+ AC_SUBST([NAS_LIBS])
+ AS_IF([test $with_nas = "yes"], [audio_methods="${audio_methods} nas"])
+diff --git a/src/clients/say/Makefile.am b/src/clients/say/Makefile.am
+index f63d2cd9..efc62f41 100644
+--- a/src/clients/say/Makefile.am
++++ b/src/clients/say/Makefile.am
+@@ -17,7 +17,7 @@
+ 
+ ## Process this file with automake to produce Makefile.in
+ 
+-inc_local = -I$(top_srcdir)/include -I$(top_srcdir)/src/api/c
++inc_local = -I$(top_srcdir)/include -I$(top_srcdir)/src/api/c -I$(top_builddir)/src/api/c/
+ c_api = $(top_builddir)/src/api/c
+ 
+ bin_PROGRAMS = spd-say

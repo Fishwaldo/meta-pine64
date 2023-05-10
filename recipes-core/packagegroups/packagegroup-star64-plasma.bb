@@ -38,6 +38,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kpipewire \
     kirigami-addons \
     ksystemstats \
+    kvantum \
     libkscreen \
     libksysguard \
     milou \
@@ -55,6 +56,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     plasma-sdk \
     plasma-disks \
     plasma-browser-integration \
+    plasma-welcome \
     pulseaudio \
     pulseaudio-server \
     xdg-desktop-portal-kde \
@@ -72,5 +74,8 @@ RDEPENDS:packagegroup-star64-plasma = " \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
-    udisks2 \                                
+    udisks2 \
+    cups \
+    wings-theme \
+    systemsettings \                              
 "

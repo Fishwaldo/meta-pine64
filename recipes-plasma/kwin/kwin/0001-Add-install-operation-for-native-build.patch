@@ -1,0 +1,24 @@
+From 0c28771f3d09794bf549e26a8b13f568812e9634 Mon Sep 17 00:00:00 2001
+From: Andreas Cord-Landwehr <cordlandwehr@kde.org>
+Date: Sun, 26 Jun 2022 19:55:01 +0200
+Subject: [PATCH] Add install operation for native build
+
+---
+ src/wayland/tools/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/wayland/tools/CMakeLists.txt b/src/wayland/tools/CMakeLists.txt
+index 767df3f28..9ea0a1e66 100644
+--- a/src/wayland/tools/CMakeLists.txt
++++ b/src/wayland/tools/CMakeLists.txt
+@@ -43,6 +43,7 @@ else()
+     remove_definitions(-DQT_NO_CAST_FROM_ASCII)
+     add_executable(qtwaylandscanner_kde qtwaylandscanner.cpp)
+     target_link_libraries(qtwaylandscanner_kde Qt::Core)
++    install(TARGETS qtwaylandscanner_kde ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+     include(ECMMarkNonGuiExecutable)
+     ecm_mark_nongui_executable(qtwaylandscanner_kde)
+ endif()
+-- 
+2.34.1
+

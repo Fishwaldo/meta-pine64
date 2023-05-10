@@ -8,6 +8,7 @@ LIC_FILES_CHKSUM = "\
 "
 
 inherit pypi
+inherit pkgconfig
 
 PYPI_PACKAGE = "PyQt5"
 
@@ -20,7 +21,7 @@ inherit qmake5
 inherit python3native python3-dir
 
 DEPENDS = "qtbase qtdeclarative qtquickcontrols2"
-DEPENDS += "sip3 sip3-native python3"
+DEPENDS += "sip3 sip3-native python3 dbus python3-dbus-native python3-dbus"
 
 export BUILD_SYS
 export HOST_SYS
@@ -31,7 +32,7 @@ PARALLEL_MAKEINST = ""
 
 DISABLED_FEATURES = "PyQt_Desktop_OpenGL PyQt_Accessibility PyQt_SessionManager ${@bb.utils.contains('DISTRO_FEATURES', 'opengl', '', 'PyQt_OpenGL', d)}"
 
-PYQT_MODULES = "QtCore QtGui QtNetwork QtXml QtNetwork QtQml ${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'QtQuick QtWidgets QtQuickWidgets', '', d)}"
+PYQT_MODULES = "QtCore QtGui QtNetwork QtXml QtNetwork QtQml QtDBus ${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'QtQuick QtWidgets QtQuickWidgets', '', d)}"
 
 do_configure:prepend() {
     cd ${S}
@@ -59,6 +60,9 @@ do_compile() {
 do_install() {
     cd ${S}
     oe_runmake MAKEFLAGS='-j 1' install
+    #dbus mainloop gets installed in a sysroot-native location!
+    install -d ${D}${libdir}/${PYTHON_DIR}/site-packages/dbus/mainloop/
+    cp ${STAGING_LIBDIR_NATIVE}/${PYTHON_DIR}/site-packages/dbus/mainloop/pyqt5.so ${D}${libdir}/${PYTHON_DIR}/site-packages/dbus/mainloop/
 }
 
 FILES:${PN} += "${libdir}/${PYTHON_DIR}/site-packages ${datadir}/sip/PyQt5/"

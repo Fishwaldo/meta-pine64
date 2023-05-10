@@ -1,0 +1,25 @@
+From 4c2952a5335ef38a2d8e2785226e0d848812cb50 Mon Sep 17 00:00:00 2001
+From: Andreas Cord-Landwehr <cordlandwehr@kde.org>
+Date: Sun, 12 Feb 2023 12:12:46 +0100
+Subject: [PATCH] Add missing cmath include for std::ceil
+
+---
+ src/wayland/output_interface.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/wayland/output_interface.cpp b/src/wayland/output_interface.cpp
+index 6bbb3c35d..6ffd60210 100644
+--- a/src/wayland/output_interface.cpp
++++ b/src/wayland/output_interface.cpp
+@@ -17,6 +17,8 @@
+ #include <QTimer>
+ #include <QVector>
+ 
++#include <cmath>
++
+ namespace KWaylandServer
+ {
+ static const int s_version = 4;
+-- 
+2.37.2
+

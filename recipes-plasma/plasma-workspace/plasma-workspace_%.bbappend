@@ -4,4 +4,5 @@ SRC_URI:append:jh7110 = " \
 
 DEPENDS:append = " \
     appstream \
+    libkexiv2 \
 "
