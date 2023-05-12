@@ -22,7 +22,7 @@ DEPENDS = " \
     libdotconf \
     libsndfile1 \
     systemd \
-    pulseaudio \
+    pipewire \
 "
 
 FILES:${PN} += " \

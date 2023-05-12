@@ -8,6 +8,7 @@ IMAGE_FEATURES += "splash package-management ssh-server-dropbear hwcodecs weston
 LICENSE = "MIT"
 
 
-IMAGE_INSTALL += "  packagegroup-gnome-desktop \
-                    packagegroup-gnome-apps \
+IMAGE_INSTALL:append = "  \
+    packagegroup-gnome-desktop \
+    packagegroup-gnome-apps \
 "

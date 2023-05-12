@@ -1,0 +1,2 @@
+SUBSYSTEM=="venc", TAG+="uaccess"
+SUBSYSTEM=="vdec", TAG+="uaccess"

@@ -14,6 +14,6 @@ IMAGE_FEATURES += " \
 LICENSE = "MIT"
 
 
-IMAGE_INSTALL += " \
+IMAGE_INSTALL:append = " \
     packagegroup-star64-weston \
 "

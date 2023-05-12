@@ -1,1 +1,1 @@
-deb [trusted=yes] https://pine64.my-ho.st:8443/ pinix all riscv64 star64
+deb [signed-by=/etc/apt/trusted.gpg.d/pinix.gpg] https://pine64.my-ho.st:8443/ pinix all riscv64 star64

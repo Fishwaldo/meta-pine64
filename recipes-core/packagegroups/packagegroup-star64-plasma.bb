@@ -8,46 +8,98 @@ PACKAGES = " \
     packagegroup-star64-plasma \
 "
 RDEPENDS:packagegroup-star64-plasma = " \
-    packagegroup-star64-minimal \
-    packagegroup-kde-gear \
-    wayland \
-    dbus \
-    drkonqi \
-    firewalld-applet \
-    sddm \
-    sddm-kcm \
-    systemd \
-    liberation-fonts \
-    ttf-noto \
+    packagegroup-core-sdk \
     packagegroup-kde-frameworks5 \
+    packagegroup-kde-gear \
+    packagegroup-star64-minimal \
     bluedevil \
     breeze \
+    dbus \
+    discover \
+    drkonqi \
+    cmake \
+    cups \
+    firewalld-applet \
+    git \
+    gstreamer1.0 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-pipewire \
+    gstreamer1.0-omx \
+    gstreamer1.0-libav \
+    gstreamer1.0-vaapi \
     kactivitymanagerd \
+    kclock \
     kde-cli-tools \
     kdecoration \
     kdeplasma-addons \
-    kinfocenter \
+    kdeconnect-kde \
     kgamma5 \
     khotkeys \
+    kinfocenter \
+    kirigami-addons \
     kmenuedit \
+    konsole \
+    konqueror \
+    kpipewire \
     kscreen \
     kscreenlocker \
-    kwayland-integration \
-    kwin \
-    kdeplasma-addons \
-    kpipewire \
-    kirigami-addons \
     ksystemstats \
     kvantum \
+    kwayland-integration \
+    kweather \
+    kwin \
     libkscreen \
     libksysguard \
+    liberation-fonts \
     milou \
+    pipewire \
+    pipewire-alsa \
+    pipewire-alsa-card-profile \
+    pipewire-modules-access \
+    pipewire-modules-adapter \
+    pipewire-modules-client-device \
+    pipewire-modules-echo-cancel \
+    pipewire-modules-fallback-sink \
+    pipewire-modules-filter-chain \
+    pipewire-modules-link-factory \
+    pipewire-modules-loopback \
+    pipewire-modules-meta \
+    pipewire-modules-metadata \
+    pipewire-modules-portal \
+    pipewire-modules-profiler \
+    pipewire-modules-protocol-pulse \
+    pipewire-modules-protocol-simple \
+    pipewire-spa-plugins-volume \
+    pipewire-spa-plugins-videotestsrc \
+    pipewire-spa-plugins-videoconvert \
+    pipewire-spa-plugins-v4l2 \
+    pipewire-spa-plugins-support \
+    pipewire-spa-plugins-meta \
+    pipewire-spa-plugins-journal \
+    pipewire-spa-plugins-dbus \
+    pipewire-spa-plugins-control \
+    pipewire-spa-plugins-codec-bluez5-sbc \
+    pipewire-spa-plugins-codec-bluez5-faststream \
+    pipewire-spa-plugins-bluez5 \
+    pipewire-spa-plugins-audiotestsrc \
+    pipewire-spa-plugins-audiomixer \
+    pipewire-spa-plugins-audioconvert \
+    pipewire-spa-plugins-alsa \
+    pipewire-spa-plugins-aec-null \
+    pipewire-modules-session-manager \
+    pipewire-pulse \
+    pipewire-spa-tools \
+    pipewire-tools \
+    pipewire-v4l2 \
+    plasma-desktop \
     plasma-integration \
     plasma-nano \
     plasma-nm \
     plasma-pa \
     plasma-workspace \
-    polkit-kde-agent-1 \
     plasma-settings \
     plasma-systemmonitor \
     plasma-vault \
@@ -57,25 +109,33 @@ RDEPENDS:packagegroup-star64-plasma = " \
     plasma-disks \
     plasma-browser-integration \
     plasma-welcome \
-    pulseaudio \
-    pulseaudio-server \
+    polkit-kde-agent-1 \
+    sddm \
+    sddm-kcm \
+    systemd \
+    systemsettings \
+    ttf-noto \
+    udisks2 \
+    wayland \
+    wings-theme \
+    wireplumber \
+    wireplumber-modules-default-nodes \
+    wireplumber-modules-default-nodes-api \
+    wireplumber-modules-default-profile \
+    wireplumber-modules-file-monitor-api \
+    wireplumber-modules-logind \
+    wireplumber-modules-lua-scripting \
+    wireplumber-modules-meta \
+    wireplumber-modules-metadata \
+    wireplumber-modules-mixer-api \
+    wireplumber-modules-portal-permissionstore \
+    wireplumber-modules-reserve-device \
+    wireplumber-modules-si-audio-adapter \
+    wireplumber-modules-si-audio-endpoint \
+    wireplumber-modules-si-node \
+    wireplumber-modules-si-standard-link \
+    vlc \
     xdg-desktop-portal-kde \
-    kclock \
-    kweather \
-    plasma-desktop \
-    kdeconnect-kde \
-    konsole \
-    discover \
-    konqueror \
     xserver-xorg-extension-glx \
     xf86-video-modesetting \
-    gstreamer1.0 \
-    gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-plugins-ugly \
-    udisks2 \
-    cups \
-    wings-theme \
-    systemsettings \                              
 "

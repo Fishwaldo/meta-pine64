@@ -1,0 +1,9 @@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@/lua52
+
+Name: Lua
+Description: Lua language engine
+Version: @VERSION@
+Requires:
+Libs: -L${libdir} -llua52 -lm -ldl
+Cflags: -I${includedir}
