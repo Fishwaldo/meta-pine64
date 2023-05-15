@@ -11,6 +11,7 @@ SRC_URI += " \
     file://akonadiserverrc \
     file://kdeglobals \
     file://kvantum.kvconfig \
+    file://fstab \
 "
 S="${WORKDIR}"
 
@@ -23,4 +24,5 @@ do_install:append() {
     install -d ${D}${sysconfdir}/skel/.config/Kvantum
     install -m 0644 ${WORKDIR}/kvantum.kvconfig ${D}${sysconfdir}/skel/.config/Kvantum/kvantum.kvconfig
     install -m 0644 ${WORKDIR}/kdeglobals ${D}${sysconfdir}/skel/.config/kdeglobals
+    install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/fstab
 }

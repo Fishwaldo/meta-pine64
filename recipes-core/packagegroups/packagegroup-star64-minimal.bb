@@ -29,4 +29,7 @@ RDEPENDS:packagegroup-star64-minimal = " \
     packagefeed \
     alsa-utils \
     gnupg \
+    linux-firmware-rtl8852 \
+    libgpiod-tools \
+    bluez5 \
 "
