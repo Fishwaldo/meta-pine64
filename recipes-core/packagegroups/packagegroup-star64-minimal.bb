@@ -32,4 +32,6 @@ RDEPENDS:packagegroup-star64-minimal = " \
     linux-firmware-rtl8852 \
     libgpiod-tools \
     bluez5 \
+    u-boot-tools \
+    kernel-image-fitimage-initramfs \
 "
