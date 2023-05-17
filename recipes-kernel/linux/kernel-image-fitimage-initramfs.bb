@@ -3,6 +3,8 @@ LICENSE = "MIT"
 SRC_URI = " \
     file://checkfitimage.sh \
 "
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 inherit kernel-artifact-names module-base
@@ -28,8 +30,11 @@ python do_package:prepend() {
 
 pkg_preinst:${PN} () {
     bootpart=`lsblk -o NAME,LABEL -r | grep "mmcblk[0-9]p[0-9] boot" | awk -F' ' '{print $1}'`
-    mount /dev/$bootpart /boot || true
-    dpkg-divert --package ${PN} --divert /usr/share/kernel/${KERNEL_IMAGETYPE}-initramfs-${KERNEL_VERSION} /boot/${KERNEL_IMAGETYPE}-initramfs-${KERNEL_VERSION}
+    if [ ! -z "$bootpart" ]; 
+    then 
+        mount /dev/$bootpart /boot || true
+        dpkg-divert --package ${PN} --divert /usr/share/kernel/${KERNEL_IMAGETYPE}-initramfs-${KERNEL_VERSION} /boot/${KERNEL_IMAGETYPE}-initramfs-${KERNEL_VERSION}
+    fi
 }
 
 pkg_postinst_ontarget:${PN} () {
@@ -58,7 +63,7 @@ do_install[depends] = "virtual/kernel:do_deploy"
 
 RDEPENDS:${PN} += " \
     u-boot-tools \
-    kernel-modules-${PV} (>= ${PV}) \
+    kernel-modules (>= ${PV}) \
 "
 
 RREPLACES:${PN} = " \
