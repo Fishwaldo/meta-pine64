@@ -64,3 +64,6 @@ RDEPENDS:${PN} += " \
 RREPLACES:${PN} = " \
     kernel-image-fitimage \
 "
+DEPENDS += " \
+    linux-starfive-dev \
+"
