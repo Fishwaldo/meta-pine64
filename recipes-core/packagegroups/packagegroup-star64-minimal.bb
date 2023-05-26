@@ -34,4 +34,6 @@ RDEPENDS:packagegroup-star64-minimal = " \
     bluez5 \
     u-boot-tools \
     kernel-image-fitimage-initramfs \
+    xz \
+    usbutils \
 "
