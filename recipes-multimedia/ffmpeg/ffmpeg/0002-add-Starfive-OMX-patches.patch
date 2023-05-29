@@ -1,0 +1,1761 @@
+From 3e4e383e552822bbca554de842e7632ca157af9e Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Thu, 18 May 2023 16:08:10 +0800
+Subject: [PATCH] add Starfive OMX patches
+
+---
+ configure                |   24 +-
+ libavcodec/Makefile      |    1 +
+ libavcodec/allcodecs.c   |    4 +
+ libavcodec/omx.c         |   90 ++-
+ libavcodec/omxdec.c      | 1368 ++++++++++++++++++++++++++++++++++++++
+ libavcodec/vaapi_h264.c  |    5 +
+ libavformat/utils.c      |   14 +
+ libavutil/mips/cpu.c     |    6 +-
+ libswscale/x86/yuv2rgb.c |    2 +
+ 9 files changed, 1496 insertions(+), 18 deletions(-)
+ mode change 100644 => 100755 libavcodec/omx.c
+ create mode 100755 libavcodec/omxdec.c
+
+diff --git a/configure b/configure
+index fb55e04..7e71d89 100755
+--- a/configure
++++ b/configure
+@@ -2135,6 +2135,7 @@ HEADERS_LIST="
+     opencv2_core_core_c_h
+     OpenGL_gl3_h
+     poll_h
++    sys_auxv_h
+     sys_param_h
+     sys_resource_h
+     sys_select_h
+@@ -3083,6 +3084,7 @@ h264_mmal_decoder_deps="mmal"
+ h264_nvenc_encoder_deps="nvenc"
+ h264_nvenc_encoder_select="atsc_a53"
+ h264_omx_encoder_deps="omx"
++h264_omx_decoder_deps="omx"
+ h264_qsv_decoder_select="h264_mp4toannexb_bsf qsvdec"
+ h264_qsv_encoder_select="atsc_a53 qsvenc"
+ h264_rkmpp_decoder_deps="rkmpp"
+@@ -3091,6 +3093,9 @@ h264_vaapi_encoder_select="cbs_h264 vaapi_encode"
+ h264_v4l2m2m_decoder_deps="v4l2_m2m h264_v4l2_m2m"
+ h264_v4l2m2m_decoder_select="h264_mp4toannexb_bsf"
+ h264_v4l2m2m_encoder_deps="v4l2_m2m h264_v4l2_m2m"
++hevc_omx_encoder_deps="omx"
++hevc_omx_decoder_deps="omx"
++mjpeg_omx_decoder_deps="omx"
+ hevc_amf_encoder_deps="amf"
+ hevc_cuvid_decoder_deps="cuvid"
+ hevc_cuvid_decoder_select="hevc_mp4toannexb_bsf"
+@@ -6182,6 +6187,7 @@ check_func_headers VideoToolbox/VTCompressionSession.h VTCompressionSessionPrepa
+ check_headers windows.h
+ check_headers X11/extensions/XvMClib.h
+ check_headers asm/types.h
++check_headers sys/auxv.h
+ 
+ # it seems there are versions of clang in some distros that try to use the
+ # gcc headers, which explodes for stdatomic
+@@ -7713,15 +7719,15 @@ rpath=$(enabled rpath && echo "-Wl,-rpath,\${libdir}")
+ source_path=${source_path}
+ LIBPREF=${LIBPREF}
+ LIBSUF=${LIBSUF}
+-extralibs_avutil="$avutil_extralibs"
+-extralibs_avcodec="$avcodec_extralibs"
+-extralibs_avformat="$avformat_extralibs"
+-extralibs_avdevice="$avdevice_extralibs"
+-extralibs_avfilter="$avfilter_extralibs"
+-extralibs_avresample="$avresample_extralibs"
+-extralibs_postproc="$postproc_extralibs"
+-extralibs_swscale="$swscale_extralibs"
+-extralibs_swresample="$swresample_extralibs"
++extralibs_avutil="$avutil_extralibs $extralibs"
++extralibs_avcodec="$avcodec_extralibs $extralibs"
++extralibs_avformat="$avformat_extralibs $extralibs"
++extralibs_avdevice="$avdevice_extralibs $extralibs"
++extralibs_avfilter="$avfilter_extralibs $extralibs"
++extralibs_avresample="$avresample_extralibs $extralibs"
++extralibs_postproc="$postproc_extralibs $extralibs"
++extralibs_swscale="$swscale_extralibs $extralibs"
++extralibs_swresample="$swresample_extralibs $extralibs"
+ EOF
+ 
+ for lib in $LIBRARY_LIST; do
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index b3d284d..07f0269 100644
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -378,6 +378,7 @@ OBJS-$(CONFIG_H264_NVENC_ENCODER)      += nvenc.o nvenc_h264.o
+ OBJS-$(CONFIG_NVENC_ENCODER)           += nvenc.o nvenc_h264.o
+ OBJS-$(CONFIG_NVENC_H264_ENCODER)      += nvenc.o nvenc_h264.o
+ OBJS-$(CONFIG_H264_OMX_ENCODER)        += omx.o
++OBJS-$(CONFIG_H264_OMX_DECODER)        += omxdec.o
+ OBJS-$(CONFIG_H264_QSV_DECODER)        += qsvdec.o
+ OBJS-$(CONFIG_H264_QSV_ENCODER)        += qsvenc_h264.o
+ OBJS-$(CONFIG_H264_RKMPP_DECODER)      += rkmppdec.o
+diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
+index 2e9a358..69627df 100644
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -792,6 +792,9 @@ extern AVCodec ff_h264_cuvid_decoder;
+ extern AVCodec ff_h264_mf_encoder;
+ extern AVCodec ff_h264_nvenc_encoder;
+ extern AVCodec ff_h264_omx_encoder;
++extern AVCodec ff_h264_omx_decoder;
++extern AVCodec ff_hevc_omx_encoder;
++extern AVCodec ff_hevc_omx_decoder;
+ extern AVCodec ff_h264_qsv_encoder;
+ extern AVCodec ff_h264_v4l2m2m_encoder;
+ extern AVCodec ff_h264_vaapi_encoder;
+@@ -814,6 +817,7 @@ extern AVCodec ff_libkvazaar_encoder;
+ extern AVCodec ff_mjpeg_cuvid_decoder;
+ extern AVCodec ff_mjpeg_qsv_encoder;
+ extern AVCodec ff_mjpeg_qsv_decoder;
++extern AVCodec ff_mjpeg_omx_decoder;
+ extern AVCodec ff_mjpeg_vaapi_encoder;
+ extern AVCodec ff_mp3_mf_encoder;
+ extern AVCodec ff_mpeg1_cuvid_decoder;
+diff --git a/libavcodec/omx.c b/libavcodec/omx.c
+old mode 100644
+new mode 100755
+index 0a6a308..d101fa4
+--- a/libavcodec/omx.c
++++ b/libavcodec/omx.c
+@@ -28,6 +28,8 @@
+ #include <dlfcn.h>
+ #include <OMX_Core.h>
+ #include <OMX_Component.h>
++#include <OMX_IndexExt.h>
++#include <OMX_VideoExt.h>
+ #include <pthread.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -42,7 +44,9 @@
+ 
+ #include "avcodec.h"
+ #include "h264.h"
++#include "hevc.h"
+ #include "internal.h"
++#include "profiles.h"
+ 
+ #ifdef OMX_SKIP64BIT
+ static OMX_TICKS to_omx_ticks(int64_t value)
+@@ -452,18 +456,31 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
+             break;
+         }
+     }
++
+     if (s->color_format == 0) {
+         av_log(avctx, AV_LOG_ERROR, "No supported pixel formats (%d formats available)\n", i);
+         return AVERROR_UNKNOWN;
+     }
+-
++    av_log(avctx, AV_LOG_VERBOSE, "OMX setting pixel_format:%s\n", av_get_pix_fmt_name(avctx->pix_fmt));
+     in_port_params.bEnabled   = OMX_TRUE;
+     in_port_params.bPopulated = OMX_FALSE;
+     in_port_params.eDomain    = OMX_PortDomainVideo;
+ 
+     in_port_params.format.video.pNativeRender         = NULL;
+     in_port_params.format.video.bFlagErrorConcealment = OMX_FALSE;
+-    in_port_params.format.video.eColorFormat          = s->color_format;
++    switch (avctx->pix_fmt) {
++        case AV_PIX_FMT_NV12:
++            in_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
++            break;
++        case AV_PIX_FMT_NV21:
++            in_port_params.format.video.eColorFormat = OMX_COLOR_FormatYVU420SemiPlanar;
++            break;
++        case AV_PIX_FMT_YUV420P:
++            out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++            break;
++        default:
++            return AVERROR_OPTION_NOT_FOUND;
++        }
+     s->stride     = avctx->width;
+     s->plane_size = avctx->height;
+     // If specific codecs need to manually override the stride/plane_size,
+@@ -473,9 +490,11 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
+     in_port_params.format.video.nFrameWidth  = avctx->width;
+     in_port_params.format.video.nFrameHeight = avctx->height;
+     if (avctx->framerate.den > 0 && avctx->framerate.num > 0)
+-        in_port_params.format.video.xFramerate = (1LL << 16) * avctx->framerate.num / avctx->framerate.den;
++        //in_port_params.format.video.xFramerate = (1LL << 16) * avctx->framerate.num / avctx->framerate.den;
++        in_port_params.format.video.xFramerate = avctx->framerate.num / avctx->framerate.den;
+     else
+-        in_port_params.format.video.xFramerate = (1LL << 16) * avctx->time_base.den / avctx->time_base.num;
++        //in_port_params.format.video.xFramerate = (1LL << 16) * avctx->time_base.den / avctx->time_base.num;
++        in_port_params.format.video.xFramerate = avctx->time_base.den / avctx->time_base.num;
+ 
+     err = OMX_SetParameter(s->handle, OMX_IndexParamPortDefinition, &in_port_params);
+     CHECK(err);
+@@ -501,6 +520,8 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
+         out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingMPEG4;
+     else if (avctx->codec->id == AV_CODEC_ID_H264)
+         out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
++    else if (avctx->codec->id == AV_CODEC_ID_HEVC)
++        out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingHEVC;
+ 
+     err = OMX_SetParameter(s->handle, OMX_IndexParamPortDefinition, &out_port_params);
+     CHECK(err);
+@@ -539,6 +560,15 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
+         }
+         err = OMX_SetParameter(s->handle, OMX_IndexParamVideoAvc, &avc);
+         CHECK(err);
++    } else if (avctx->codec->id == AV_CODEC_ID_HEVC) {
++        OMX_VIDEO_PARAM_HEVCTYPE hevc = { 0 };
++        INIT_STRUCT(hevc);
++        hevc.nPortIndex = s->out_port;
++        err = OMX_GetParameter(s->handle, OMX_IndexParamVideoHevc, &hevc);
++        CHECK(err);
++        hevc.nKeyFrameInterval = avctx->gop_size;
++        err = OMX_SetParameter(s->handle, OMX_IndexParamVideoHevc, &hevc);
++        CHECK(err);
+     }
+ 
+     err = OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+@@ -666,6 +696,9 @@ static av_cold int omx_encode_init(AVCodecContext *avctx)
+     case AV_CODEC_ID_H264:
+         role = "video_encoder.avc";
+         break;
++    case AV_CODEC_ID_HEVC:
++        role = "video_encoder.hevc";
++        break;
+     default:
+         return AVERROR(ENOSYS);
+     }
+@@ -715,7 +748,23 @@ static av_cold int omx_encode_init(AVCodecContext *avctx)
+                 }
+                 if (nals[H264_NAL_SPS] && nals[H264_NAL_PPS])
+                     break;
+-            } else {
++            } else if (avctx->codec->id == AV_CODEC_ID_HEVC) {
++                // For H.265, the extradata can be returned in two separate buffers
++                // (the videocore encoder on raspberry pi does this);
++                // therefore check that we have got both SPS and PPS before continuing.
++                int nals[128] = { 0 };
++                int i;
++                for (i = 0; i + 4 < avctx->extradata_size; i++) {
++                     if (!avctx->extradata[i + 0] &&
++                         !avctx->extradata[i + 1] &&
++                         !avctx->extradata[i + 2] &&
++                         avctx->extradata[i + 3] == 1) {
++                         nals[(avctx->extradata[i + 4] & 0x7E) >> 1]++;
++                     }
++                }
++                if (nals[HEVC_NAL_SPS] && nals[HEVC_NAL_PPS] && nals[HEVC_NAL_VPS])
++                    break;
++        } else {
+                 if (avctx->extradata_size > 0)
+                     break;
+             }
+@@ -941,8 +990,15 @@ static const AVOption options[] = {
+     { NULL }
+ };
+ 
++static const AVOption options_hevc[] = {
++    { "omx_libname", "OpenMAX library name", OFFSET(libname), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "omx_libprefix", "OpenMAX library prefix", OFFSET(libprefix), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "zerocopy", "Try to avoid copying input frames if possible", OFFSET(input_zerocopy), AV_OPT_TYPE_INT, { .i64 = CONFIG_OMX_RPI }, 0, 1, VE },
++    { NULL },
++};
++
+ static const enum AVPixelFormat omx_encoder_pix_fmts[] = {
+-    AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE
++    AV_PIX_FMT_YUV420P, AV_PIX_FMT_NV12, AV_PIX_FMT_NV21, AV_PIX_FMT_NONE
+ };
+ 
+ static const AVClass omx_mpeg4enc_class = {
+@@ -986,3 +1042,25 @@ AVCodec ff_h264_omx_encoder = {
+     .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
+     .priv_class       = &omx_h264enc_class,
+ };
++
++static const AVClass omx_hevcenc_class = {
++    .class_name = "hevc_omx",
++    .item_name = av_default_item_name,
++    .option = options_hevc,
++    .version = LIBAVUTIL_VERSION_INT,
++};
++AVCodec ff_hevc_omx_encoder = {
++    .name             = "hevc_omx",
++    .long_name        = NULL_IF_CONFIG_SMALL("OpenMAX IL HEVC video encoder"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_HEVC,
++    .priv_data_size   = sizeof(OMXCodecContext),
++    .init             = omx_encode_init,
++    .encode2          = omx_encode_frame,
++    .close            = omx_encode_end,
++    .pix_fmts         = omx_encoder_pix_fmts,
++    .profiles         = NULL_IF_CONFIG_SMALL(ff_hevc_profiles),
++    .capabilities     = AV_CODEC_CAP_DELAY,
++    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++    .priv_class       = &omx_hevcenc_class,
++};
+diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
+new file mode 100755
+index 0000000..1bb08b1
+--- /dev/null
++++ b/libavcodec/omxdec.c
+@@ -0,0 +1,1368 @@
++/*
++ * OMX Video decoder
++ * Copyright (C) 2018-2022 Starfive Technology
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++
++#if CONFIG_OMX_RPI
++#define OMX_SKIP64BIT
++#endif
++
++#include <dlfcn.h>
++#include <OMX_Core.h>
++#include <OMX_Component.h>
++#include <OMX_IVCommon.h>
++#include <pthread.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/time.h>
++
++#include "libavutil/avstring.h"
++#include "libavutil/avutil.h"
++#include "libavutil/common.h"
++#include "libavutil/imgutils.h"
++#include "libavutil/log.h"
++#include "libavutil/opt.h"
++#include "libavutil/time.h"
++
++#include "avcodec.h"
++#include "h264.h"
++#include "internal.h"
++#include "profiles.h"
++
++int evnet_bufferflag;
++int dec_out_height;
++int dec_out_width;
++int dec_pix_fmt;
++
++#ifdef OMX_SKIP64BIT
++static OMX_TICKS to_omx_ticks(int64_t value)
++{
++    OMX_TICKS s;
++    s.nLowPart  = value & 0xffffffff;
++    s.nHighPart = value >> 32;
++    return s;
++}
++static int64_t from_omx_ticks(OMX_TICKS value)
++{
++    return (((int64_t)value.nHighPart) << 32) | value.nLowPart;
++}
++#else
++#define to_omx_ticks(x) (x)
++#define from_omx_ticks(x) (x)
++#endif
++
++#define INIT_STRUCT(x) do {                                               \
++        x.nSize = sizeof(x);                                              \
++        x.nVersion = s->version;                                          \
++    } while (0)
++#define CHECK(x) do {                                                     \
++        if (x != OMX_ErrorNone) {                                         \
++            av_log(avctx, AV_LOG_ERROR,                                   \
++                   "err %x (%d) on line %d\n", x, x, __LINE__);           \
++            return AVERROR_UNKNOWN;                                       \
++        }                                                                 \
++    } while (0)
++
++#define FF_ARRAY_ELEMS(a) (sizeof(a) / sizeof((a)[0]))
++
++typedef struct OMXContext {
++    void *lib;
++    void *lib2;
++    OMX_ERRORTYPE (*ptr_Init)(void);
++    OMX_ERRORTYPE (*ptr_Deinit)(void);
++    OMX_ERRORTYPE (*ptr_ComponentNameEnum)(OMX_STRING, OMX_U32, OMX_U32);
++    OMX_ERRORTYPE (*ptr_GetHandle)(OMX_HANDLETYPE*, OMX_STRING, OMX_PTR, OMX_CALLBACKTYPE*);
++    OMX_ERRORTYPE (*ptr_FreeHandle)(OMX_HANDLETYPE);
++    OMX_ERRORTYPE (*ptr_GetComponentsOfRole)(OMX_STRING, OMX_U32*, OMX_U8**);
++    OMX_ERRORTYPE (*ptr_GetRolesOfComponent)(OMX_STRING, OMX_U32*, OMX_U8**);
++    void (*host_init)(void);
++} OMXContext;
++
++typedef struct OMXDecodeQueueNode {
++    int64_t val;
++    struct OMXDecodeQueueNode* next;
++} OMXDecodeQueueNode;
++
++typedef struct OMXDecodeQueue {
++    OMXDecodeQueueNode* head;
++    OMXDecodeQueueNode* tail;
++} OMXDecodeQueue;
++
++static av_cold void OMXDecodeQueueInit(OMXDecodeQueue* pq)
++{
++    assert(pq);
++    pq->head = pq->tail = NULL;
++}
++
++static av_cold void OMXDecodeQueueDestory(OMXDecodeQueue* pq)
++{
++    OMXDecodeQueueNode* cur = pq->head;
++    assert(pq);
++    while (cur)
++    {
++        OMXDecodeQueueNode* next = cur->next;
++        av_free(cur);
++        cur = next;
++    }
++    pq->tail = pq->head = NULL;
++}
++
++static void OMXDecodeQueuePush(OMXDecodeQueue* pq, int64_t x)
++{
++    OMXDecodeQueueNode* newNode = (OMXDecodeQueueNode*)malloc(sizeof(OMXDecodeQueueNode));
++    if (NULL == newNode)
++    {
++        av_log(NULL, AV_LOG_ERROR, "malloc queue error\n");
++        exit(-1);
++    }
++    assert(pq);
++    newNode->val = x;
++    newNode->next = NULL;
++
++    if (pq->tail == NULL)
++    {
++        assert(pq->head == NULL);
++        pq->head = pq->tail = newNode;
++    }
++    else
++    {
++        pq->tail->next = newNode;
++        pq->tail = newNode;
++    }
++
++}
++
++static void OMXDecodeQueuePop(OMXDecodeQueue* pq)
++{
++    assert(pq);
++    assert(pq->head && pq->tail);
++    if (pq->head->next == NULL)
++    {
++        av_free(pq->head);
++        pq->head = pq->tail = NULL;
++    }
++    else
++    {
++        OMXDecodeQueueNode* next = pq->head->next;
++        av_free(pq->head);
++        pq->head = next;
++    }
++}
++
++static int OMXDecodeQueueEmpty(OMXDecodeQueue* pq)
++{
++    assert(pq);
++
++    return pq->head == NULL;
++}
++
++static int64_t OMXDecodeQueueFront(OMXDecodeQueue* pq)
++{
++    assert(pq);
++    assert(pq->head);
++
++    return pq->head->val;
++}
++
++static const struct {
++    int color_format;
++    enum AVPixelFormat pix_fmt;
++} color_formats[] = {
++    { OMX_COLOR_FormatYUV420Planar,                           AV_PIX_FMT_YUV420P },
++    { OMX_COLOR_FormatYUV420SemiPlanar,                       AV_PIX_FMT_NV12    },
++    { OMX_COLOR_FormatYVU420SemiPlanar,                       AV_PIX_FMT_NV21    },
++    { OMX_COLOR_FormatYUV422SemiPlanar,                       AV_PIX_FMT_NV16    },
++    { OMX_COLOR_FormatYUV422Planar,                           AV_PIX_FMT_YUV422P },
++    { OMX_COLOR_FormatYCbYCr,                                 AV_PIX_FMT_YUYV422 },
++    { OMX_COLOR_FormatYCrYCb,                                 AV_PIX_FMT_YVYU422 },
++    { OMX_COLOR_FormatCbYCrY,                                 AV_PIX_FMT_UYVY422 },
++    { OMX_COLOR_FormatYUV444Planar,                           AV_PIX_FMT_YUV444P },
++    { 0 }
++};
++
++static enum AVPixelFormat omx_map_color_format(AVCodecContext *avctx, int color_format)
++{
++    int i;
++    enum AVPixelFormat ret = AV_PIX_FMT_NONE;
++
++    for (i = 0; i < FF_ARRAY_ELEMS(color_formats); i++) {
++        if (color_formats[i].color_format == color_format) {
++            return color_formats[i].pix_fmt;
++        }
++    }
++
++    av_log(avctx, AV_LOG_ERROR, "Output color format 0x%x (value=%d) is not supported\n",
++        color_format, color_format);
++
++    return ret;
++}
++
++static av_cold void *dlsym_prefixed(void *handle, const char *symbol, const char *prefix)
++{
++    char buf[50];
++    snprintf(buf, sizeof(buf), "%s%s", prefix ? prefix : "", symbol);
++    return dlsym(handle, buf);
++}
++
++static av_cold int omx_try_load(OMXContext *s, void *logctx,
++                                const char *libname, const char *prefix,
++                                const char *libname2)
++{
++    if (libname2) {
++        s->lib2 = dlopen(libname2, RTLD_NOW | RTLD_GLOBAL);
++        if (!s->lib2) {
++            av_log(logctx, AV_LOG_WARNING, "%s not found\n", libname2);
++            return AVERROR_ENCODER_NOT_FOUND;
++        }
++        s->host_init = dlsym(s->lib2, "bcm_host_init");
++        if (!s->host_init) {
++            av_log(logctx, AV_LOG_WARNING, "bcm_host_init not found\n");
++            dlclose(s->lib2);
++            s->lib2 = NULL;
++            return AVERROR_ENCODER_NOT_FOUND;
++        }
++    }
++    s->lib = dlopen(libname, RTLD_NOW | RTLD_GLOBAL);
++    if (!s->lib) {
++        av_log(logctx, AV_LOG_WARNING, "%s not found\n", libname);
++        return AVERROR_ENCODER_NOT_FOUND;
++    }
++    s->ptr_Init                = dlsym_prefixed(s->lib, "OMX_Init", prefix);
++    s->ptr_Deinit              = dlsym_prefixed(s->lib, "OMX_Deinit", prefix);
++    s->ptr_ComponentNameEnum   = dlsym_prefixed(s->lib, "OMX_ComponentNameEnum", prefix);
++    s->ptr_GetHandle           = dlsym_prefixed(s->lib, "OMX_GetHandle", prefix);
++    s->ptr_FreeHandle          = dlsym_prefixed(s->lib, "OMX_FreeHandle", prefix);
++    s->ptr_GetComponentsOfRole = dlsym_prefixed(s->lib, "OMX_GetComponentsOfRole", prefix);
++    s->ptr_GetRolesOfComponent = dlsym_prefixed(s->lib, "OMX_GetRolesOfComponent", prefix);
++    if (!s->ptr_Init || !s->ptr_Deinit || !s->ptr_ComponentNameEnum ||
++        !s->ptr_GetHandle || !s->ptr_FreeHandle ||
++        !s->ptr_GetComponentsOfRole || !s->ptr_GetRolesOfComponent) {
++        av_log(logctx, AV_LOG_WARNING, "Not all functions found in %s\n", libname);
++        dlclose(s->lib);
++        s->lib = NULL;
++        if (s->lib2)
++            dlclose(s->lib2);
++        s->lib2 = NULL;
++        return AVERROR_ENCODER_NOT_FOUND;
++    }
++    return 0;
++}
++
++static av_cold OMXContext *omx_init(void *logctx, const char *libname, const char *prefix)
++{
++    static const char * const libnames[] = {
++#if CONFIG_OMX_RPI
++        "/opt/vc/lib/libopenmaxil.so", "/opt/vc/lib/libbcm_host.so",
++#else
++        "libOMX_Core.so", NULL,
++        "libOmxCore.so", NULL,
++#endif
++        NULL
++    };
++    const char* const* nameptr;
++    int ret = AVERROR_DECODER_NOT_FOUND;
++    OMXContext *omx_context;
++
++    omx_context = av_mallocz(sizeof(*omx_context));
++    if (!omx_context)
++        return NULL;
++    if (libname) {
++        ret = omx_try_load(omx_context, logctx, libname, prefix, NULL);
++        if (ret < 0) {
++            av_free(omx_context);
++            return NULL;
++        }
++    } else {
++        for (nameptr = libnames; *nameptr; nameptr += 2)
++            if (!(ret = omx_try_load(omx_context, logctx, nameptr[0], prefix, nameptr[1])))
++                break;
++        if (!*nameptr) {
++            av_free(omx_context);
++            return NULL;
++        }
++    }
++
++    if (omx_context->host_init)
++        omx_context->host_init();
++    omx_context->ptr_Init();
++    return omx_context;
++}
++
++static av_cold void omx_deinit(OMXContext *omx_context)
++{
++    if (!omx_context)
++        return;
++
++    omx_context->ptr_Deinit();
++    dlclose(omx_context->lib);
++    av_free(omx_context);
++}
++
++typedef struct OMXCodecContext {
++    const AVClass *class;
++    char *libname;
++    char *libprefix;
++    OMXContext *omx_context;
++
++    AVCodecContext *avctx;
++
++    char component_name[OMX_MAX_STRINGNAME_SIZE];
++    OMX_VERSIONTYPE version;
++    OMX_HANDLETYPE handle;
++    int in_port, out_port;
++    OMX_COLOR_FORMATTYPE color_format;
++    int stride, plane_size;
++
++    int num_in_buffers, num_out_buffers;
++    OMX_BUFFERHEADERTYPE **in_buffer_headers;
++    OMX_BUFFERHEADERTYPE **out_buffer_headers;
++    int num_free_in_buffers;
++    OMX_BUFFERHEADERTYPE **free_in_buffers;
++    int num_done_out_buffers;
++    OMX_BUFFERHEADERTYPE **done_out_buffers;
++    pthread_mutex_t input_mutex;
++    pthread_cond_t input_cond;
++    pthread_mutex_t output_mutex;
++    pthread_cond_t output_cond;
++
++    pthread_mutex_t state_mutex;
++    pthread_cond_t state_cond;
++    OMX_STATETYPE state;
++    OMX_ERRORTYPE error;
++
++    int mutex_cond_inited;
++
++    int eos_sent, got_eos, evnet_bufferflag, first_get_outbuffer;
++
++    int extradata_sent;
++
++    uint8_t *output_buf;
++    int output_buf_size;
++
++    OMX_U32 scale_width;
++    OMX_U32 scale_height;
++    OMX_U32 rotation;
++    OMX_U32 mirror;
++    char *crop_expr;
++    struct {
++        int x;
++        int y;
++        int w;
++        int h;
++    } crop;
++
++    OMXDecodeQueue decode_pts_queue;
++    int decode_flag;
++    int input_zerocopy;
++    int profile;
++    char *pixel_format;     /**< Set by a private option. */
++} OMXCodecContext;
++
++static void append_buffer(pthread_mutex_t *mutex, pthread_cond_t *cond,
++                          int* array_size, OMX_BUFFERHEADERTYPE **array,
++                          OMX_BUFFERHEADERTYPE *buffer)
++{
++    pthread_mutex_lock(mutex);
++    array[(*array_size)++] = buffer;
++    pthread_cond_broadcast(cond);
++    pthread_mutex_unlock(mutex);
++}
++
++static OMX_BUFFERHEADERTYPE *get_buffer(pthread_mutex_t *mutex, pthread_cond_t *cond,
++                                        int* array_size, OMX_BUFFERHEADERTYPE **array,
++                                        int wait)
++{
++    OMX_BUFFERHEADERTYPE *buffer;
++    pthread_mutex_lock(mutex);
++    if (wait) {
++        while (!*array_size)
++        {
++           pthread_cond_wait(cond, mutex);
++        }
++    }
++    if (*array_size > 0) {
++        buffer = array[0];
++        (*array_size)--;
++        memmove(&array[0], &array[1], (*array_size) * sizeof(OMX_BUFFERHEADERTYPE*));
++    } else {
++        buffer = NULL;
++    }
++    pthread_mutex_unlock(mutex);
++    return buffer;
++}
++
++static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, OMX_EVENTTYPE event,
++                                   OMX_U32 data1, OMX_U32 data2, OMX_PTR event_data)
++{
++    OMXCodecContext *s = app_data;
++    // This uses casts in the printfs, since OMX_U32 actually is a typedef for
++    // unsigned long in official header versions (but there are also modified
++    // versions where it is something else).
++    OMX_PARAM_PORTDEFINITIONTYPE out_port_params = { 0 };
++    OMX_PORT_PARAM_TYPE video_port_params = { 0 };
++    OMX_ERRORTYPE err;
++    int i;
++
++    switch (event) {
++    case OMX_EventError:
++        pthread_mutex_lock(&s->state_mutex);
++        av_log(s->avctx, AV_LOG_ERROR, "OMX error %"PRIx32"\n", (uint32_t) data1);
++        s->error = data1;
++        pthread_cond_broadcast(&s->state_cond);
++        pthread_mutex_unlock(&s->state_mutex);
++        break;
++    case OMX_EventCmdComplete:
++        if (data1 == OMX_CommandStateSet) {
++            pthread_mutex_lock(&s->state_mutex);
++            s->state = data2;
++            av_log(s->avctx, AV_LOG_VERBOSE, "OMX state changed to %"PRIu32"\n", (uint32_t) data2);
++            pthread_cond_broadcast(&s->state_cond);
++            pthread_mutex_unlock(&s->state_mutex);
++        } else if (data1 == OMX_CommandPortDisable) {
++            av_log(s->avctx, AV_LOG_VERBOSE, "OMX port %"PRIu32" disabled\n", (uint32_t) data2);
++        } else if (data1 == OMX_CommandPortEnable) {
++            av_log(s->avctx, AV_LOG_VERBOSE, "OMX port %"PRIu32" enabled\n", (uint32_t) data2);
++        } else {
++            av_log(s->avctx, AV_LOG_VERBOSE, "OMX command complete, command %"PRIu32", value %"PRIu32"\n",
++                                             (uint32_t) data1, (uint32_t) data2);
++        }
++        break;
++    case OMX_EventPortSettingsChanged:
++        av_log(s->avctx, AV_LOG_VERBOSE, "OMX port %"PRIu32" settings changed\n", (uint32_t) data1);
++        INIT_STRUCT(video_port_params);
++        err = OMX_GetParameter(s->handle, OMX_IndexParamVideoInit, &video_port_params);
++        if(err != OMX_ErrorNone){
++            av_log(s->avctx, AV_LOG_ERROR, "err %d\n",err);          
++            return AVERROR_UNKNOWN;
++        }
++        for (i = 0; i < video_port_params.nPorts; i++) {
++            int port = video_port_params.nStartPortNumber + i;
++            OMX_PARAM_PORTDEFINITIONTYPE port_params = { 0 };
++            INIT_STRUCT(port_params);
++            port_params.nPortIndex = port;
++            err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &port_params);
++            if (err != OMX_ErrorNone) {
++                av_log(s->avctx, AV_LOG_WARNING, "port %d error %x\n", port, err);
++            return AVERROR_UNKNOWN;
++            }
++            if (port_params.eDir == OMX_DirOutput) {
++                out_port_params = port_params;
++                dec_out_width = out_port_params.format.video.nFrameWidth;
++                dec_out_height = out_port_params.format.video.nFrameHeight;
++                dec_pix_fmt = out_port_params.format.video.eColorFormat;
++
++                av_log(s->avctx, AV_LOG_VERBOSE, "w:%d, h:%d, fmt:%d\n", dec_out_width, dec_out_height, dec_pix_fmt); 
++            } 
++        }
++        break;
++    case OMX_EventBufferFlag:
++        av_log(s->avctx, AV_LOG_VERBOSE, "OMX decoder competd set event_bufferflag\n");
++        evnet_bufferflag = 1;
++    default:
++        av_log(s->avctx, AV_LOG_VERBOSE, "OMX event %d %"PRIx32" %"PRIx32"\n",
++                                         event, (uint32_t) data1, (uint32_t) data2);
++        break;
++    }
++    return OMX_ErrorNone;
++}
++
++static OMX_ERRORTYPE empty_buffer_done(OMX_HANDLETYPE component, OMX_PTR app_data,
++                                       OMX_BUFFERHEADERTYPE *buffer)
++{
++
++    OMXCodecContext *s = app_data;
++    if (s->input_zerocopy) {
++        if (buffer->pAppPrivate) {
++            if (buffer->pOutputPortPrivate)
++                av_free(buffer->pAppPrivate);
++            else
++                av_frame_free((AVFrame**)&buffer->pAppPrivate);
++            buffer->pAppPrivate = NULL;
++        }
++    }
++    append_buffer(&s->input_mutex, &s->input_cond,
++                  &s->num_free_in_buffers, s->free_in_buffers, buffer);
++    return OMX_ErrorNone;
++}
++
++static OMX_ERRORTYPE fill_buffer_done(OMX_HANDLETYPE component, OMX_PTR app_data,
++                                      OMX_BUFFERHEADERTYPE *buffer)
++{
++    OMXCodecContext *s = app_data;
++    append_buffer(&s->output_mutex, &s->output_cond,
++                  &s->num_done_out_buffers, s->done_out_buffers, buffer);
++    return OMX_ErrorNone;
++}
++
++static const OMX_CALLBACKTYPE callbacks = {
++    event_handler,
++    empty_buffer_done,
++    fill_buffer_done
++};
++
++static av_cold int find_component(OMXContext *omx_context, void *logctx,
++                                  const char *role, char *str, int str_size)
++{
++    OMX_U32 i, num = 0;
++    char **components;
++    int ret = 0;
++
++#if CONFIG_OMX_RPI
++    if (av_strstart(role, "video_decoder.", NULL)) {
++        av_strlcpy(str, "OMX.broadcom.video_decode", str_size);
++        return 0;
++    }
++#endif
++    omx_context->ptr_GetComponentsOfRole((OMX_STRING) role, &num, NULL);
++    if (!num) {
++        av_log(logctx, AV_LOG_WARNING, "No component for role %s found\n", role);
++        return AVERROR_DECODER_NOT_FOUND;
++    }
++    components = av_mallocz_array(num, sizeof(*components));
++    if (!components)
++        return AVERROR(ENOMEM);
++    for (i = 0; i < num; i++) {
++        components[i] = av_mallocz(OMX_MAX_STRINGNAME_SIZE);
++        if (!components[i]) {
++            ret = AVERROR(ENOMEM);
++            goto end;
++        }
++    }
++    omx_context->ptr_GetComponentsOfRole((OMX_STRING) role, &num, (OMX_U8**) components);
++    av_strlcpy(str, components[0], str_size);
++end:
++    for (i = 0; i < num; i++)
++        av_free(components[i]);
++    av_free(components);
++    return ret;
++}
++
++static av_cold int wait_for_state(OMXCodecContext *s, OMX_STATETYPE state)
++{
++    int ret = 0;
++    pthread_mutex_lock(&s->state_mutex);
++    while (s->state != state && s->error == OMX_ErrorNone)
++        pthread_cond_wait(&s->state_cond, &s->state_mutex);
++    if (s->error != OMX_ErrorNone)
++        ret = AVERROR_DECODER_NOT_FOUND;
++    pthread_mutex_unlock(&s->state_mutex);
++    return ret;
++}
++
++static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
++{
++    OMXCodecContext *s = avctx->priv_data;
++    OMX_PARAM_COMPONENTROLETYPE role_params = { 0 };
++    OMX_PORT_PARAM_TYPE video_port_params = { 0 };
++    OMX_PARAM_PORTDEFINITIONTYPE in_port_params = { 0 }, out_port_params = { 0 };
++    //OMX_VIDEO_PARAM_PORTFORMATTYPE video_port_format = { 0 };
++    //OMX_VIDEO_PARAM_BITRATETYPE vid_param_bitrate = { 0 };
++    OMX_ERRORTYPE err;
++    OMX_CONFIG_SCALEFACTORTYPE ScaleConfig;
++    OMX_CONFIG_MIRRORTYPE MirrorConfig;
++    OMX_CONFIG_ROTATIONTYPE RotatConfig;
++    OMX_CONFIG_RECTTYPE RectConfig;
++    int i;
++    s->version.s.nVersionMajor = 1;
++    s->version.s.nVersionMinor = 1;
++    s->version.s.nRevision     = 2;
++
++    err = s->omx_context->ptr_GetHandle(&s->handle, s->component_name, s, (OMX_CALLBACKTYPE*) &callbacks);
++    if (err != OMX_ErrorNone) {
++        av_log(avctx, AV_LOG_ERROR, "OMX_GetHandle(%s) failed: %x\n", s->component_name, err);
++        return AVERROR_UNKNOWN;
++    }
++
++    // This one crashes the mediaserver on qcom, if used over IOMX
++    INIT_STRUCT(role_params);
++    av_strlcpy(role_params.cRole, role, sizeof(role_params.cRole));
++    // Intentionally ignore errors on this one
++    OMX_SetParameter(s->handle, OMX_IndexParamStandardComponentRole, &role_params);
++
++    INIT_STRUCT(video_port_params);
++    err = OMX_GetParameter(s->handle, OMX_IndexParamVideoInit, &video_port_params);
++    CHECK(err);
++
++    s->in_port = s->out_port = -1;
++    for (i = 0; i < video_port_params.nPorts; i++) {
++        int port = video_port_params.nStartPortNumber + i;
++        OMX_PARAM_PORTDEFINITIONTYPE port_params = { 0 };
++        INIT_STRUCT(port_params);
++        port_params.nPortIndex = port;
++        err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &port_params);
++        if (err != OMX_ErrorNone) {
++            av_log(avctx, AV_LOG_WARNING, "port %d error %x\n", port, err);
++            break;
++        }
++        if (port_params.eDir == OMX_DirInput && s->in_port < 0) {
++            in_port_params = port_params;
++            s->in_port = port;
++        } else if (port_params.eDir == OMX_DirOutput && s->out_port < 0) {
++            out_port_params = port_params;
++            s->out_port = port;
++        }
++    }
++    if (s->in_port < 0 || s->out_port < 0) {
++        av_log(avctx, AV_LOG_ERROR, "No in or out port found (in %d out %d)\n", s->in_port, s->out_port);
++        return AVERROR_UNKNOWN;
++    }
++
++    in_port_params.bEnabled   = OMX_TRUE;
++    in_port_params.bPopulated = OMX_FALSE;
++    in_port_params.eDomain    = OMX_PortDomainVideo;
++
++    in_port_params.format.video.pNativeRender         = NULL;
++    in_port_params.format.video.bFlagErrorConcealment = OMX_FALSE;
++    in_port_params.format.video.eColorFormat          = s->color_format;
++    s->stride     = avctx->width;
++    s->plane_size = avctx->height;
++    // If specific codecs need to manually override the stride/plane_size,
++    // that can be done here.
++    in_port_params.format.video.nStride      = s->stride;
++    in_port_params.format.video.nSliceHeight = s->plane_size;
++    in_port_params.format.video.nFrameWidth  = avctx->width;
++    in_port_params.format.video.nFrameHeight = avctx->height;
++
++    if (avctx->framerate.den > 0 && avctx->framerate.num > 0)
++        //in_port_params.format.video.xFramerate = (1LL << 16) * avctx->framerate.num / avctx->framerate.den;
++        in_port_params.format.video.xFramerate = avctx->framerate.num / avctx->framerate.den;
++    else
++        //in_port_params.format.video.xFramerate = (1LL << 16) * avctx->time_base.den / avctx->time_base.num;
++        in_port_params.format.video.xFramerate = avctx->time_base.den / avctx->time_base.num;
++
++    err = OMX_SetParameter(s->handle, OMX_IndexParamPortDefinition, &in_port_params);
++    CHECK(err);
++    err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &in_port_params);
++    CHECK(err);
++
++    s->stride         = in_port_params.format.video.nStride;
++    s->plane_size     = in_port_params.format.video.nSliceHeight;
++    s->num_in_buffers = in_port_params.nBufferCountActual;
++
++    err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &out_port_params);
++    out_port_params.bEnabled   = OMX_TRUE;
++    out_port_params.bPopulated = OMX_FALSE;
++    out_port_params.eDomain    = OMX_PortDomainVideo;
++    out_port_params.format.video.pNativeRender = NULL;
++    out_port_params.format.video.bFlagErrorConcealment  = OMX_FALSE;
++    out_port_params.format.video.nStride       = 0;
++    out_port_params.format.video.nSliceHeight  = 0;
++    out_port_params.format.video.nBitrate      = avctx->bit_rate;
++    out_port_params.format.video.xFramerate    = in_port_params.format.video.xFramerate;
++    out_port_params.format.video.bFlagErrorConcealment  = OMX_FALSE;
++
++    if (avctx->codec->id == AV_CODEC_ID_MPEG4)
++        out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingMPEG4;
++    else if (avctx->codec->id == AV_CODEC_ID_H264) {
++        out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
++    }
++    else if (avctx->codec->id == AV_CODEC_ID_HEVC) {
++        out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingHEVC;
++    }
++    else if (avctx->codec->id == AV_CODEC_ID_MJPEG) {
++        out_port_params.format.video.eCompressionFormat = OMX_VIDEO_CodingMJPEG;
++
++        /* Set Scale config setting*/
++        if (s->scale_width || s->scale_height) {
++            av_log(avctx, AV_LOG_TRACE, "mjpeg decoder: scaling width: %d scaling height: %d .\n", s->scale_width, s->scale_height);
++            INIT_STRUCT(ScaleConfig);
++            ScaleConfig.nPortIndex = 1;
++            OMX_GetConfig(s->handle, OMX_IndexConfigCommonScale, &ScaleConfig);
++            /* in Q16 format */
++            ScaleConfig.xWidth = (1 << 16) >> (s->scale_width & 0x3);
++            ScaleConfig.xHeight = (1 << 16) >> (s->scale_height & 0x3);
++            OMX_SetConfig(s->handle, OMX_IndexConfigCommonScale, &ScaleConfig);
++        }
++
++        out_port_params.format.video.nFrameWidth   = avctx->width;
++        out_port_params.format.video.nFrameHeight  = avctx->height;
++
++        /* Set pixel format to decoder output*/
++        if (s->pixel_format) {
++            switch (av_get_pix_fmt(s->pixel_format)) {
++            case AV_PIX_FMT_NV12:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
++                break;
++            case AV_PIX_FMT_NV21:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYVU420SemiPlanar;
++                break;
++            case AV_PIX_FMT_YUV420P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++                break;
++            case AV_PIX_FMT_NV16:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV422SemiPlanar;
++                break;
++            case AV_PIX_FMT_YUV422P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV422Planar;
++                break;
++            case AV_PIX_FMT_YUYV422:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYCbYCr;
++                break;
++            case AV_PIX_FMT_YVYU422:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYCrYCb;
++                break;
++            case AV_PIX_FMT_UYVY422:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatCbYCrY;
++                break;
++            case AV_PIX_FMT_YUV444P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV444Planar;
++                break;
++            default:
++                return AVERROR_OPTION_NOT_FOUND;
++            }
++            av_log(avctx, AV_LOG_VERBOSE, "OMX setting pixel_format:%s\n", s->pixel_format);
++        } else {
++            switch (avctx->pix_fmt) {
++            case AV_PIX_FMT_YUVJ420P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++                break;
++            case AV_PIX_FMT_YUVJ422P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV422Planar;
++                break;
++            case AV_PIX_FMT_YUVJ444P:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV444Planar;
++                break;
++            default:
++                out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++                break;
++            }
++        }
++
++        /* Set Mirror config setting*/
++        if (s->mirror) {
++            if (s->pixel_format || s->scale_width || s->scale_height || s->rotation) {
++                av_log(avctx, AV_LOG_ERROR, "Mirror cannot work with other option together.\n");
++                return AVERROR_INVALIDDATA;
++            }
++            av_log(avctx, AV_LOG_TRACE, "mjpeg decoder: mirror\n");
++            INIT_STRUCT(MirrorConfig);
++            MirrorConfig.nPortIndex = 1;
++            OMX_GetConfig(s->handle, OMX_IndexConfigCommonMirror, &MirrorConfig);
++            MirrorConfig.eMirror = s->mirror;
++            OMX_SetConfig(s->handle, OMX_IndexConfigCommonMirror, &MirrorConfig);
++        }
++
++        /* Set Rotation config setting*/
++        if (s->rotation) {
++            if (s->pixel_format || s->scale_width || s->scale_height || s->mirror) {
++                av_log(avctx, AV_LOG_ERROR, "Rotation cannot work with other option together.\n");
++                return AVERROR_INVALIDDATA;
++            }
++            av_log(avctx, AV_LOG_TRACE, "mjpeg decoder: rotation\n");
++            INIT_STRUCT(RotatConfig);
++            RotatConfig.nPortIndex = 1;
++            OMX_GetConfig(s->handle, OMX_IndexConfigCommonRotate, &RotatConfig);
++            switch (s->rotation) {
++            case 1:
++                RotatConfig.nRotation = 90;
++                break;
++            case 2:
++                RotatConfig.nRotation = 180;
++                break;
++            case 3:
++                RotatConfig.nRotation = 270;
++                break;
++            default:
++                RotatConfig.nRotation = 0;
++                break;
++            }
++            OMX_SetConfig(s->handle, OMX_IndexConfigCommonRotate, &RotatConfig);
++        }
++
++        /* Set Roi config setting*/
++        if (s->crop_expr && sscanf(s->crop_expr, "%d,%d,%d,%d",
++                                &s->crop.x, &s->crop.y,
++                                &s->crop.w, &s->crop.h) != 4) {
++            av_log(avctx, AV_LOG_ERROR, "Invalid cropping expressions.\n");
++            return AVERROR_OPTION_NOT_FOUND;
++        }
++
++        if (s->crop.w && s->crop.h) {
++            if (s->pixel_format || s->scale_width || s->scale_height || s->mirror || s->rotation) {
++                av_log(avctx, AV_LOG_ERROR, "Crop cannot work with other option together.\n");
++                return AVERROR_INVALIDDATA;
++            }
++            if ((s->crop.x < 0) || (s->crop.x > (avctx->width - s->crop.w)) ||
++                 (s->crop.y < 0) || (s->crop.y > (avctx->height - s->crop.h)) ||
++                 (s->crop.w < 16) || (s->crop.w > (avctx->width - s->crop.x)) ||
++                 (s->crop.h < 16) || (s->crop.h > (avctx->height - s->crop.y))) {
++                av_log(avctx, AV_LOG_ERROR, "Invalid cropping range.\n");
++                return AVERROR_INVALIDDATA;
++            }
++            if (s->crop.w % 16 != 0 || s->crop.h % 16 != 0) {
++                av_log(avctx, AV_LOG_ERROR, "The width/height must be an integer multiple of 16\n");
++                return AVERROR_INVALIDDATA;
++            }
++
++            INIT_STRUCT(RectConfig);
++            RectConfig.nPortIndex = 1;
++            OMX_GetConfig(s->handle, OMX_IndexConfigCommonOutputCrop, &RectConfig);
++            RectConfig.nLeft = s->crop.x;
++            RectConfig.nTop = s->crop.y;
++            RectConfig.nWidth = s->crop.w;
++            RectConfig.nHeight = s->crop.h;
++            OMX_SetConfig(s->handle, OMX_IndexConfigCommonOutputCrop, &RectConfig);
++            av_log(avctx, AV_LOG_ERROR, "mjpeg decoder:roi x: %d y: %d w: %d h: %d .\n", s->crop.x, s->crop.y, s->crop.w, s->crop.h);
++        }
++    }
++
++    if (avctx->codec->id == AV_CODEC_ID_H264 || avctx->codec->id == AV_CODEC_ID_HEVC) {
++        /* Set Scale config setting*/
++        if ((s->scale_width != 0) && ((s->scale_width < avctx->width/8) ||
++             (s->scale_width > avctx->width) || (s->scale_width % 2 != 0))) {
++            av_log(avctx, AV_LOG_ERROR, "scale_width: Invalid scale parameter\n");
++            return AVERROR_INVALIDDATA;
++        }
++        if (s->scale_width == avctx->width/8 && (s->scale_width % 8 != 0)) {
++            av_log(avctx, AV_LOG_ERROR, "When scale_width is width/8, scale_width must be a multiple of 8(ceil 8).\n");
++            return AVERROR_INVALIDDATA;
++        }
++        if ((s->scale_height != 0) && ((s->scale_height < avctx->height/8) ||
++             (s->scale_height > avctx->height) || (s->scale_height % 2 != 0))) {
++            av_log(avctx, AV_LOG_ERROR, "scale_height: Invalid scale parameter\n");
++            return AVERROR_INVALIDDATA;
++        }
++        if (s->scale_height == avctx->height/8 && (s->scale_height % 8 != 0)) {
++            av_log(avctx, AV_LOG_ERROR, "When scale_height is height/8, scale_height must be a multiple of 8(ceil 8).\n");
++            return AVERROR_INVALIDDATA;
++        }
++        out_port_params.format.video.nFrameWidth   = s->scale_width ? s->scale_width : avctx->width;
++        out_port_params.format.video.nFrameHeight  = s->scale_height ? s->scale_height : avctx->height;
++
++        switch (av_get_pix_fmt(s->pixel_format)) {
++        case AV_PIX_FMT_NV12:
++            out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
++            break;
++        case AV_PIX_FMT_NV21:
++            out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYVU420SemiPlanar;
++            break;
++        case AV_PIX_FMT_YUV420P:
++            out_port_params.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
++            break;
++        default:
++            return AVERROR_OPTION_NOT_FOUND;
++        }
++    }
++
++    err = OMX_SetParameter(s->handle, OMX_IndexParamPortDefinition, &out_port_params);
++    CHECK(err);
++    err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &out_port_params);
++    CHECK(err);
++    s->num_out_buffers = out_port_params.nBufferCountActual;
++
++    err = OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
++    CHECK(err);
++    s->in_buffer_headers  = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_in_buffers);
++    s->free_in_buffers    = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_in_buffers);
++    s->out_buffer_headers = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
++    s->done_out_buffers   = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
++    if (!s->in_buffer_headers || !s->free_in_buffers || !s->out_buffer_headers || !s->done_out_buffers)
++        return AVERROR(ENOMEM);
++
++    for (i = 0; i < s->num_in_buffers && err == OMX_ErrorNone; i++) {
++        if (s->input_zerocopy)
++            err = OMX_UseBuffer(s->handle, &s->in_buffer_headers[i], s->in_port, s, in_port_params.nBufferSize, NULL);
++        else
++            err = OMX_AllocateBuffer(s->handle, &s->in_buffer_headers[i],  s->in_port,  s, in_port_params.nBufferSize);
++        if (err == OMX_ErrorNone)
++            s->in_buffer_headers[i]->pAppPrivate = s->in_buffer_headers[i]->pOutputPortPrivate = NULL;
++    }
++    CHECK(err);
++    s->num_in_buffers = i;
++    for (i = 0; i < s->num_out_buffers && err == OMX_ErrorNone; i++)
++        err = OMX_AllocateBuffer(s->handle, &s->out_buffer_headers[i], s->out_port, s, out_port_params.nBufferSize);
++    CHECK(err);
++    s->num_out_buffers = i;
++    if (wait_for_state(s, OMX_StateIdle) < 0) {
++        av_log(avctx, AV_LOG_ERROR, "Didn't get OMX_StateIdle\n");
++        return AVERROR_UNKNOWN;
++    }
++    err = OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
++    CHECK(err);
++    if (wait_for_state(s, OMX_StateExecuting) < 0) {
++        av_log(avctx, AV_LOG_ERROR, "Didn't get OMX_StateExecuting\n");
++        return AVERROR_UNKNOWN;
++    }
++    for (i = 0; i < s->num_out_buffers && err == OMX_ErrorNone; i++)
++        err = OMX_FillThisBuffer(s->handle, s->out_buffer_headers[i]);
++    if (err != OMX_ErrorNone) {
++        for (; i < s->num_out_buffers; i++)
++            s->done_out_buffers[s->num_done_out_buffers++] = s->out_buffer_headers[i];
++    }
++    for (i = 0; i < s->num_in_buffers; i++)
++        s->free_in_buffers[s->num_free_in_buffers++] = s->in_buffer_headers[i];
++    return err != OMX_ErrorNone ? AVERROR_UNKNOWN : 0;
++}
++
++static av_cold void cleanup(OMXCodecContext *s)
++{
++    int i, executing;
++
++    pthread_mutex_lock(&s->state_mutex);
++    executing = s->state == OMX_StateExecuting;
++    pthread_mutex_unlock(&s->state_mutex);
++
++    if (executing) {
++        OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
++        wait_for_state(s, OMX_StateIdle);
++        OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
++        for (i = 0; i < s->num_in_buffers; i++) {
++            OMX_BUFFERHEADERTYPE *buffer = get_buffer(&s->input_mutex, &s->input_cond,
++                                                      &s->num_free_in_buffers, s->free_in_buffers, 1);
++            if (s->input_zerocopy)
++                buffer->pBuffer = NULL;
++            OMX_FreeBuffer(s->handle, s->in_port, buffer);
++        }
++        for (i = 0; i < s->num_out_buffers; i++) {
++            OMX_BUFFERHEADERTYPE *buffer = get_buffer(&s->output_mutex, &s->output_cond,
++                                                      &s->num_done_out_buffers, s->done_out_buffers, 1);
++            OMX_FreeBuffer(s->handle, s->out_port, buffer);
++        }
++        wait_for_state(s, OMX_StateLoaded);
++    }
++    if (s->handle) {
++        s->omx_context->ptr_FreeHandle(s->handle);
++        s->handle = NULL;
++    }
++
++    omx_deinit(s->omx_context);
++    s->omx_context = NULL;
++    if (s->mutex_cond_inited) {
++        pthread_cond_destroy(&s->state_cond);
++        pthread_mutex_destroy(&s->state_mutex);
++        pthread_cond_destroy(&s->input_cond);
++        pthread_mutex_destroy(&s->input_mutex);
++        pthread_cond_destroy(&s->output_cond);
++        pthread_mutex_destroy(&s->output_mutex);
++        s->mutex_cond_inited = 0;
++    }
++    OMXDecodeQueueDestory(&s->decode_pts_queue);
++    av_freep(&s->decode_pts_queue);
++    av_freep(&s->in_buffer_headers);
++    av_freep(&s->out_buffer_headers);
++    av_freep(&s->free_in_buffers);
++    av_freep(&s->done_out_buffers);
++    av_freep(&s->output_buf);
++}
++
++static av_cold int omx_decode_init(AVCodecContext *avctx)
++{
++    OMXCodecContext *s = avctx->priv_data;
++    int ret = AVERROR_ENCODER_NOT_FOUND;
++    const char *role;
++    //OMX_BUFFERHEADERTYPE *buffer;
++    //OMX_ERRORTYPE err;
++    OMXDecodeQueueInit(&s->decode_pts_queue);
++
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->time_base: %d/%d \n", avctx->time_base.num, avctx->time_base.den);
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->framerate: %d/%d \n", avctx->framerate.num, avctx->framerate.den);
++    s->omx_context = omx_init(avctx, s->libname, s->libprefix);
++    if (!s->omx_context)
++        return AVERROR_ENCODER_NOT_FOUND;
++
++    pthread_mutex_init(&s->state_mutex, NULL);
++    pthread_cond_init(&s->state_cond, NULL);
++    pthread_mutex_init(&s->input_mutex, NULL);
++    pthread_cond_init(&s->input_cond, NULL);
++    pthread_mutex_init(&s->output_mutex, NULL);
++    pthread_cond_init(&s->output_cond, NULL);
++    s->mutex_cond_inited = 1;
++    s->avctx = avctx;
++    s->state = OMX_StateLoaded;
++    s->error = OMX_ErrorNone;
++    s->decode_flag = 0;
++
++    switch (avctx->codec->id) {
++    case AV_CODEC_ID_MPEG4:
++        role = "video_decoder.mpeg4";
++        break;
++    case AV_CODEC_ID_H264:
++        role = "video_decoder.avc";
++        break;
++    case AV_CODEC_ID_HEVC:
++        role = "video_decoder.hevc";
++        break;
++    case AV_CODEC_ID_MJPEG:
++        role = "video_decoder.mjpeg";
++        break;
++    default:
++        return AVERROR(ENOSYS);
++    }
++
++    if ((ret = find_component(s->omx_context, avctx, role, s->component_name, sizeof(s->component_name))) < 0)
++        goto fail;
++
++    av_log(avctx, AV_LOG_INFO, "Using %s\n", s->component_name);
++
++    if ((ret = omx_component_init(avctx, role)) < 0)
++        goto fail;
++
++// #if 0
++//     if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
++//         while (1) {
++//             buffer = get_buffer(&s->output_mutex, &s->output_cond,
++//                                 &s->num_done_out_buffers, s->done_out_buffers, 1);
++//             if (buffer->nFlags & OMX_BUFFERFLAG_CODECCONFIG) {
++//                 if ((ret = av_reallocp(&avctx->extradata, avctx->extradata_size + buffer->nFilledLen + AV_INPUT_BUFFER_PADDING_SIZE)) < 0) {
++//                     avctx->extradata_size = 0;
++//                     goto fail;
++//                 }
++//                 memcpy(avctx->extradata + avctx->extradata_size, buffer->pBuffer + buffer->nOffset, buffer->nFilledLen);
++//                 avctx->extradata_size += buffer->nFilledLen;
++//                 memset(avctx->extradata + avctx->extradata_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
++//             }
++//             err = OMX_FillThisBuffer(s->handle, buffer);
++//             if (err != OMX_ErrorNone) {
++//                 append_buffer(&s->output_mutex, &s->output_cond,
++//                               &s->num_done_out_buffers, s->done_out_buffers, buffer);
++//                 av_log(avctx, AV_LOG_ERROR, "OMX_FillThisBuffer failed: %x\n", err);
++//                 ret = AVERROR_UNKNOWN;
++//                 goto fail;
++//             }
++//             if (avctx->codec->id == AV_CODEC_ID_H264) {
++//                 // For H.264, the extradata can be returned in two separate buffers
++//                 // (the videocore encoder on raspberry pi does this);
++//                 // therefore check that we have got both SPS and PPS before continuing.
++//                 int nals[32] = { 0 };
++//                 int i;
++//                 for (i = 0; i + 4 < avctx->extradata_size; i++) {
++//                      if (!avctx->extradata[i + 0] &&
++//                          !avctx->extradata[i + 1] &&
++//                          !avctx->extradata[i + 2] &&
++//                          avctx->extradata[i + 3] == 1) {
++//                          nals[avctx->extradata[i + 4] & 0x1f]++;
++//                      }
++//                 }
++//                 if (nals[H264_NAL_SPS] && nals[H264_NAL_PPS])
++//                     break;
++//             } else {
++//                 if (avctx->extradata_size > 0)
++//                     break;
++//             }
++//         }
++//     }
++// #endif
++
++    return 0;
++fail:
++    return ret;
++}
++
++
++static int omx_decode_frame(AVCodecContext *avctx, void *data,
++                           int *got_packet, AVPacket *pkt)
++{
++    OMXCodecContext *s = avctx->priv_data;
++    int ret = 0;
++    OMX_BUFFERHEADERTYPE* buffer;
++    OMX_ERRORTYPE err;
++    int had_partial = 0;
++
++    AVFrame *avframe = data;
++
++    uint8_t *dst[4];
++    int linesize[4];
++
++    av_log(avctx, AV_LOG_VERBOSE, "s->decode_flag: %d\n", s->decode_flag);
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->time_base: %d/%d \n", avctx->time_base.num, avctx->time_base.den);
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->pkt_timebase: %d/%d \n", avctx->pkt_timebase.num, avctx->pkt_timebase.den);
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->framerate: %d/%d \n", avctx->framerate.num, avctx->framerate.den);
++    av_log(avctx, AV_LOG_VERBOSE, "avpkt->size: %d avpkt->pts: %ld avpkt->dts: %ld avpkt->duration: %ld\n",
++                                     pkt->size, pkt->pts, pkt->dts, pkt->duration);
++    av_log(avctx, AV_LOG_VERBOSE, "avctx->pts_correction_last_pts: %ld avctx->pts_correction_last_dts: %ld\n",
++                                     avctx->pts_correction_last_pts, avctx->pts_correction_last_dts);
++    OMXDecodeQueuePush(&s->decode_pts_queue, pkt->dts);
++    if (pkt->size) {
++
++        //VPU init and fill buffer slow, so empty buf sleep to send before get vpu fill buf.
++        // if(!s->first_get_outbuffer)
++        // av_usleep(100000);
++        buffer = get_buffer(&s->input_mutex, &s->input_cond,
++                            &s->num_free_in_buffers, s->free_in_buffers, 1);
++
++        if (!buffer) {
++            av_log(avctx, AV_LOG_ERROR, "get_buffer NULL\n");
++            return AVERROR(ENOMEM);
++        }
++
++        //cpy the extradata
++        if(!s->extradata_sent && avctx->extradata ) {
++
++            memcpy(buffer->pBuffer + buffer->nOffset, avctx->extradata, avctx->extradata_size);    
++            memcpy(buffer->pBuffer + buffer->nOffset + avctx->extradata_size, pkt->data, pkt->size);
++            buffer->nFilledLen = pkt->size + avctx->extradata_size;
++            s->extradata_sent = 1;
++        
++        }
++        else {
++            memcpy(buffer->pBuffer + buffer->nOffset, pkt->data, pkt->size);
++            buffer->nFilledLen = pkt->size;
++        }
++
++        /* avoid memcpy. point it addr*/
++        //buffer->pAppPrivate = pkt;
++        //buffer->pBuffer = pkt->data;
++        //buffer->nFilledLen = pkt->size;
++        
++        buffer->pOutputPortPrivate = NULL;
++        buffer->pAppPrivate = avctx->priv_data;
++        buffer->nFlags = OMX_BUFFERFLAG_ENDOFFRAME;
++
++        err = OMX_EmptyThisBuffer(s->handle, buffer);
++        if (err != OMX_ErrorNone) {
++            append_buffer(&s->input_mutex, &s->input_cond, &s->num_free_in_buffers, s->free_in_buffers, buffer);
++            av_log(avctx, AV_LOG_ERROR, "OMX_EmptyThisBuffer failed: %x\n", err);
++            return AVERROR_UNKNOWN;
++        }
++    } else if (!s->eos_sent) {
++
++        // if(!s->first_get_outbuffer)
++        // av_usleep(1000000);
++        buffer = get_buffer(&s->input_mutex, &s->input_cond,
++                            &s->num_free_in_buffers, s->free_in_buffers, 1);
++
++        if(!buffer) {
++            av_log(avctx, AV_LOG_ERROR, "get_buffer NULL\n");
++            return AVERROR(ENOMEM);
++        }
++
++        buffer->nFilledLen = 0;
++        buffer->nFlags = OMX_BUFFERFLAG_EOS;
++        buffer->pAppPrivate = buffer->pOutputPortPrivate = NULL;
++        
++        err = OMX_EmptyThisBuffer(s->handle, buffer);
++        if (err != OMX_ErrorNone) {
++            append_buffer(&s->input_mutex, &s->input_cond, &s->num_free_in_buffers, s->free_in_buffers, buffer);
++            av_log(avctx, AV_LOG_ERROR, "OMX_EmptyThisBuffer failed: %x\n", err);
++            return AVERROR_UNKNOWN;
++        }
++        s->eos_sent = 1;
++    }
++
++    while (!*got_packet && ret == 0 && !s->got_eos) {
++        // If not flushing, just poll the queue if there's finished packets.
++        // If flushing, do a blocking wait until we either get a completed
++        // packet, or get EOS.
++        buffer = get_buffer(&s->output_mutex, &s->output_cond,
++                            &s->num_done_out_buffers, s->done_out_buffers,
++                            !pkt || had_partial);
++
++        if (!buffer) {
++            /*eos is sent wait for vpu evnet_bufferflag to get all frames
++              mjpeg: sent a frame, then wait for a decoder frame 
++            */
++            if((s->eos_sent && !evnet_bufferflag) || (avctx->codec_id == AV_CODEC_ID_MJPEG )) {
++                continue; 
++            }
++            break;
++        }
++        //if (!buffer)
++           // break;
++        // if(!s->first_get_outbuffer)
++        //     s->first_get_outbuffer = 1;
++
++        if(!buffer->nFilledLen){
++            av_log(avctx, AV_LOG_VERBOSE, "buffer->nFilledLen %d\n",(int)buffer->nFilledLen);
++            goto end;
++        }
++
++        avctx->width = dec_out_width;
++        avctx->height = dec_out_height;
++        avctx->pix_fmt = omx_map_color_format(avctx, dec_pix_fmt);
++        s->stride     = avctx->width;
++        s->plane_size = avctx->height;
++        
++        if (buffer->nFlags & OMX_BUFFERFLAG_EOS)
++            s->got_eos = 1;
++
++        if ((ret = ff_get_buffer(avctx, avframe, 0)) < 0) {
++            av_log(avctx, AV_LOG_ERROR, "Unable to allocate buffer\n");
++            goto end;
++        }
++
++        ret = av_image_fill_arrays(dst, linesize, buffer->pBuffer,
++                                   avctx->pix_fmt, s->stride, s->plane_size, 1);
++        if (ret < 0){
++            av_log(avctx, AV_LOG_ERROR, "av_image_fill_arrays ret:%d\n", ret);
++            goto end;
++        }
++
++        av_image_copy(avframe->data, avframe->linesize, (const uint8_t**)dst, linesize, 
++                            avctx->pix_fmt, avctx->width, avctx->height);
++        if (pkt->pts) {
++            if (OMXDecodeQueueEmpty(&s->decode_pts_queue) != 0){
++                av_log(avctx, AV_LOG_ERROR, "The queue of decode pts is empty.\n");
++                return AVERROR_INVALIDDATA;
++            }
++            avframe->pts = OMXDecodeQueueFront(&s->decode_pts_queue);
++            OMXDecodeQueuePop(&s->decode_pts_queue);
++        }
++        s->decode_flag += 1;
++        *got_packet = 1;
++
++        /*
++        if ((ret = av_frame_ref(data, avframe)) < 0)
++            goto end;
++        */
++
++end:     
++        err = OMX_FillThisBuffer(s->handle, buffer);
++        if (err != OMX_ErrorNone) {
++            append_buffer(&s->output_mutex, &s->output_cond, &s->num_done_out_buffers, s->done_out_buffers, buffer);
++            av_log(avctx, AV_LOG_ERROR, "OMX_FillThisBuffer failed: %x\n", err);
++            ret = AVERROR_UNKNOWN;
++        }
++    }
++    return ret;
++}
++
++static av_cold int omx_decode_end(AVCodecContext *avctx)
++{
++    OMXCodecContext *s = avctx->priv_data;
++
++    cleanup(s);
++    return 0;
++}
++
++#define OFFSET(x) offsetof(OMXCodecContext, x)
++#define VDE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM | AV_OPT_FLAG_ENCODING_PARAM
++#define VE  AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
++#define VD  AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM
++static const AVOption options[] = {
++    { "omx_libname", "OpenMAX library name", OFFSET(libname), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "omx_libprefix", "OpenMAX library prefix", OFFSET(libprefix), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "zerocopy", "Try to avoid copying input frames if possible", OFFSET(input_zerocopy), AV_OPT_TYPE_INT, { .i64 = CONFIG_OMX_RPI }, 0, 1, VE },
++    { "profile",  "Set the encoding profile", OFFSET(profile), AV_OPT_TYPE_INT,   { .i64 = FF_PROFILE_UNKNOWN },       FF_PROFILE_UNKNOWN, FF_PROFILE_H264_HIGH, VE, "profile" },
++    { "baseline", "",                         0,               AV_OPT_TYPE_CONST, { .i64 = FF_PROFILE_H264_BASELINE }, 0, 0, VE, "profile" },
++    { "main",     "",                         0,               AV_OPT_TYPE_CONST, { .i64 = FF_PROFILE_H264_MAIN },     0, 0, VE, "profile" },
++    { "high",     "",                         0,               AV_OPT_TYPE_CONST, { .i64 = FF_PROFILE_H264_HIGH },     0, 0, VE, "profile" },
++    { "omx_pix_fmt", "Set the decoding pixel format for h264_omx decoder. The following formats are supported: yuv420p, nv12, nv21.", OFFSET(pixel_format), AV_OPT_TYPE_STRING, { .str = "yuv420p" }, 0, 0, VD },
++    { "scale_width", "Set the scaling width for omx (Only zoom out is support, ceil 8(width/8) and minimum 1/8)", OFFSET(scale_width), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VD },
++    { "scale_height", "Set the scaling height for omx (Only zoom out is support, ceil 8(height/8) and minimum 1/8)", OFFSET(scale_height), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VD },
++    { NULL }
++};
++
++static const AVOption options_hevc[] = {
++    { "omx_libname", "OpenMAX library name", OFFSET(libname), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "omx_libprefix", "OpenMAX library prefix", OFFSET(libprefix), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "zerocopy", "Try to avoid copying input frames if possible", OFFSET(input_zerocopy), AV_OPT_TYPE_INT, { .i64 = CONFIG_OMX_RPI }, 0, 1, VE },
++    { "omx_pix_fmt", "Set the decoding pixel format for hevc_omx decoder. The following formats are supported: yuv420p, nv12, nv21.", OFFSET(pixel_format), AV_OPT_TYPE_STRING, { .str = "yuv420p" }, 0, 0, VD },
++    { "scale_width", "Set the scaling width for omx (Only zoom out is support, ceil 8(width/8) and minimum 1/8)", OFFSET(scale_width), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VD },
++    { "scale_height", "Set the scaling height for omx (Only zoom out is support, ceil 8(height/8) and minimum 1/8)", OFFSET(scale_height), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VD },
++    { NULL },
++};
++
++static const AVOption options_mjpeg[] = {
++    { "omx_libname", "OpenMAX library name", OFFSET(libname), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "omx_libprefix", "OpenMAX library prefix", OFFSET(libprefix), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VDE },
++    { "zerocopy", "Try to avoid copying input frames if possible", OFFSET(input_zerocopy), AV_OPT_TYPE_INT, { .i64 = CONFIG_OMX_RPI }, 0, 1, VD },
++    { "omx_pix_fmt", "Set the decoding pixel format for mjpeg_omx decoder. The following formats are supported: yuv420p, nv12, nv21, nv16, yuv422p, yuyv422, yvyu422, uyvy422, yuv444p.", OFFSET(pixel_format), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, VD },
++    { "scale_width", "Set the scaling width for omx (Only zoom out is support, Horizontal downscale: 0(none), 1(1/2), 2(1/4), 3(1/8)) and minimum 1/8)", OFFSET(scale_width), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VD },
++    { "scale_height", "Set the scaling height for omx (Only zoom out is support, Vertical downscale: 0(none), 1(1/2), 2(1/4), 3(1/8)) and minimum 1/8)", OFFSET(scale_height), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VD },
++    { "mirror", "mirror 0(none), 1(V), 2(H) or 3(VH), cannot be set at the same time as pixel format conversion, rotation and crop", OFFSET(mirror), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VD },
++    { "rotation", "rotation 0(0), 1(90), 2(180) or 3(270), cannot be set at the same time as pixel format conversion, mirror and crop", OFFSET(rotation), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VD },
++    { "crop", "crop <x>,<y>,<w>,<h>: crop coord and width/height(from left/top, must be an integer multiple of 16), cannot be set at the same time as pixel format conversion, mirror and rotation", OFFSET(crop_expr), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, VD },
++    { NULL },
++};
++
++static const AVClass omx_mpeg4dec_class = {
++    .class_name = "mpeg4_omx",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++AVCodec ff_mpeg4_omx_decoder = {
++    .name             = "mpeg4_omx",
++    .long_name        = NULL_IF_CONFIG_SMALL("OpenMAX IL MPEG-4 video decoder"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_MPEG4,
++    .priv_data_size   = sizeof(OMXCodecContext),
++    .init             = omx_decode_init,
++    .decode           = omx_decode_frame,
++    .close            = omx_decode_end,
++    .capabilities     = AV_CODEC_CAP_DELAY,
++    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++    .priv_class       = &omx_mpeg4dec_class,
++};
++
++static const AVClass omx_h264dec_class = {
++    .class_name = "h264_omx",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++AVCodec ff_h264_omx_decoder = {
++    .name             = "h264_omx",
++    .long_name        = NULL_IF_CONFIG_SMALL("OpenMAX IL H.264 video decoder"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_H264,
++    .priv_data_size   = sizeof(OMXCodecContext),
++    .init             = omx_decode_init,
++    .decode           = omx_decode_frame,
++    .close            = omx_decode_end,
++    .capabilities     = AV_CODEC_CAP_DELAY,
++    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++    .priv_class       = &omx_h264dec_class,
++    .bsfs             = "h264_mp4toannexb",
++};
++
++static const AVClass omx_hevcdec_class = {
++    .class_name = "hevc_omx",
++    .item_name  = av_default_item_name,
++    .option     = options_hevc,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++AVCodec ff_hevc_omx_decoder = {
++    .name             = "hevc_omx",
++    .long_name        = NULL_IF_CONFIG_SMALL("OpenMAX IL HEVC video decoder"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_HEVC,
++    .priv_data_size   = sizeof(OMXCodecContext),
++    .init             = omx_decode_init,
++    .decode           = omx_decode_frame,
++    .close            = omx_decode_end,
++    .profiles         = NULL_IF_CONFIG_SMALL(ff_hevc_profiles),
++    .capabilities     = AV_CODEC_CAP_DELAY,
++    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++    .priv_class       = &omx_hevcdec_class,
++    .bsfs             = "hevc_mp4toannexb",
++};
++
++static const AVClass omx_mjpegdec_class = {
++    .class_name = "mjpeg_omx",
++    .item_name  = av_default_item_name,
++    .option     = options_mjpeg,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++AVCodec ff_mjpeg_omx_decoder = {
++    .name             = "mjpeg_omx",
++    .long_name        = NULL_IF_CONFIG_SMALL("OpenMAX IL mjpeg video decoder"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_MJPEG,
++    .priv_data_size   = sizeof(OMXCodecContext),
++    .init             = omx_decode_init,
++    .decode           = omx_decode_frame,
++    .close            = omx_decode_end,
++    .capabilities     = AV_CODEC_CAP_DR1,
++    .max_lowres       = 3,
++    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++    .priv_class       = &omx_mjpegdec_class,
++};
+diff --git a/libavcodec/vaapi_h264.c b/libavcodec/vaapi_h264.c
+index 9332aa6..d4494be 100644
+--- a/libavcodec/vaapi_h264.c
++++ b/libavcodec/vaapi_h264.c
+@@ -314,6 +314,11 @@ static int vaapi_h264_end_frame(AVCodecContext *avctx)
+     H264SliceContext *sl = &h->slice_ctx[0];
+     int ret;
+ 
++    if (pic->nb_slices == 0) {
++        ret = AVERROR_INVALIDDATA;
++        goto finish;
++    }
++
+     ret = ff_vaapi_decode_issue(avctx, pic);
+     if (ret < 0)
+         goto finish;
+diff --git a/libavformat/utils.c b/libavformat/utils.c
+index 7f5a337..c48fc0b 100644
+--- a/libavformat/utils.c
++++ b/libavformat/utils.c
+@@ -212,6 +212,20 @@ static const AVCodec *find_probe_decoder(AVFormatContext *s, const AVStream *st,
+         return avcodec_find_decoder_by_name("h264");
+ #endif
+ 
++#if CONFIG_HEVC_DECODER
++	/* Other parts of the code assume this decoder to be used for h265,
++	 * so force it if possible. */
++	if (codec_id == AV_CODEC_ID_HEVC)
++		return avcodec_find_decoder_by_name("hevc");
++#endif
++
++#if CONFIG_MJPEG_DECODER
++		/* Other parts of the code assume this decoder to be used for mjpeg,
++		 * so force it if possible. */
++		if (codec_id == AV_CODEC_ID_MJPEG)
++			return avcodec_find_decoder_by_name("mjpeg");
++#endif
++
+     codec = find_decoder(s, st, codec_id);
+     if (!codec)
+         return NULL;
+diff --git a/libavutil/mips/cpu.c b/libavutil/mips/cpu.c
+index 59619d5..19196de 100644
+--- a/libavutil/mips/cpu.c
++++ b/libavutil/mips/cpu.c
+@@ -19,7 +19,7 @@
+ #include "libavutil/cpu.h"
+ #include "libavutil/cpu_internal.h"
+ #include "config.h"
+-#if defined __linux__ || defined __ANDROID__
++#if (defined __linux__ || defined __ANDROID__) && HAVE_SYS_AUXV_H
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -28,7 +28,7 @@
+ #include "libavutil/avstring.h"
+ #endif
+ 
+-#if defined __linux__ || defined __ANDROID__
++#if (defined __linux__ || defined __ANDROID__) && HAVE_SYS_AUXV_H
+ 
+ #define HWCAP_LOONGSON_CPUCFG (1 << 14)
+ 
+@@ -105,7 +105,7 @@ static int cpu_flags_cpuinfo(void)
+ 
+ int ff_get_cpu_flags_mips(void)
+ {
+-#if defined __linux__ || defined __ANDROID__
++#if (defined __linux__ || defined __ANDROID__) && HAVE_SYS_AUXV_H
+     if (cpucfg_available())
+         return cpu_flags_cpucfg();
+     else
+diff --git a/libswscale/x86/yuv2rgb.c b/libswscale/x86/yuv2rgb.c
+index 47f45bd..26295b5 100644
+--- a/libswscale/x86/yuv2rgb.c
++++ b/libswscale/x86/yuv2rgb.c
+@@ -71,6 +71,7 @@ av_cold SwsFunc ff_yuv2rgb_init_x86(SwsContext *c)
+ #if HAVE_X86ASM
+     int cpu_flags = av_get_cpu_flags();
+ 
++#if HAVE_SSSE3
+     if (EXTERNAL_SSSE3(cpu_flags)) {
+         switch (c->dstFormat) {
+         case AV_PIX_FMT_RGB32:
+@@ -99,6 +100,7 @@ av_cold SwsFunc ff_yuv2rgb_init_x86(SwsContext *c)
+             return yuv420_rgb15_ssse3;
+         }
+     }
++#endif
+ 
+     if (EXTERNAL_MMXEXT(cpu_flags)) {
+         switch (c->dstFormat) {
+-- 
+2.40.1
+
