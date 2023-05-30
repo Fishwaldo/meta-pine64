@@ -27,11 +27,11 @@ layers['poky']='git://git.yoctoproject.org/poky|kirkstone|4cc0e9438b450b43749730
 layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|kirkstone|571e36e20e9d1f27af0eb4545291beeb64f280e2'
 layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|bb723a11b10290f2f16031c1e4d9815095a990ce'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
-layers['yocto-meta-kf5']='https://github.com/KDE/yocto-meta-kf5.git|master|288288033137c19b72948a91d74b82b66c788fe3'
-layers['yocto-meta-kde']='https://github.com/KDE/yocto-meta-kde.git|master|e533c2bf3133cc3fec6f78104ed0839fd84e2165'
+layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|104abe6793180bac03f36fb59355abc8778e3ffd'
+layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|1ba0b84e783b4a5ec83cf883181622538566eb9c'
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
 layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'
-layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|cb5f717f21ca8f5bc937cb52350aa46a59aa8d7d'
+layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|6d9b8b21c65876926529098d71551a23f61280a1'
 #layers['meta-clang']='https://github.com/davidlt/meta-clang.git|langdale|aa46b8e9599c1d3cc165b79355100adbc4c8effa'
 
 echo "Checking Layers..."

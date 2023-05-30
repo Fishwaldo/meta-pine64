@@ -8,8 +8,6 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/MIT;md5=0835ad
 
 inherit kernel-artifact-names module-base
 
-PV="${KERNEL_VERSION}"
-
 pkg_preinst:${PN} () {
     bootpart=`lsblk -o NAME,LABEL -r | grep "mmcblk[0-9]p[0-9] boot" | awk -F' ' '{print $1}'`
     if [ ! -z "$bootpart" ]; 
