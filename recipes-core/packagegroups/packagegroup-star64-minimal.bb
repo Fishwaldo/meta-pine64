@@ -36,4 +36,12 @@ RDEPENDS:packagegroup-star64-minimal = " \
     kernel-image-fitimage-initramfs \
     xz \
     usbutils \
+    elfutils \
+    e2fsprogs \
+    packagegroup-core-sdk \
+    packagegroup-core-tools-debug \
+    clang \
+    git \
+    cmake \
+    meson \
 "

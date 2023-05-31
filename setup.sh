@@ -32,7 +32,7 @@ layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
 layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'
 layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|6d9b8b21c65876926529098d71551a23f61280a1'
-#layers['meta-clang']='https://github.com/davidlt/meta-clang.git|langdale|aa46b8e9599c1d3cc165b79355100adbc4c8effa'
+layers['meta-clang']='https://github.com/davidlt/meta-clang.git|kirkstone|71321ddf78ea522b87a6b4bffefb14c988a6d921'
 
 echo "Checking Layers..."
 echo ""
