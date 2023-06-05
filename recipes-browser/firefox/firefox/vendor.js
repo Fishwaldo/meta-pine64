@@ -1,0 +1,9 @@
+pref("webgl.force-enabled", true);
+pref("general.useragent.compatMode.firefox", true);
+pref("distribution.searchplugins.defaultLocale", "en-US");
+pref("browser.shell.checkDefaultBrowser", true);
+pref("browser.shell.skipDefaultBrowserCheckOnFirstRun", true);
+pref("devtools.webide.autoinstallADBHelper", false);
+pref("devtools.webide.autoinstallFxdtAdapters", false);
+pref("layers.acceleration.force-enabled", true);
+pref("layers.omtp.enabled", true);

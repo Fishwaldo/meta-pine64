@@ -1,0 +1,311 @@
+Index: firefox-113.0/third_party/libwebrtc/api/audio_codecs/builtin_audio_decoder_factory_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/api/audio_codecs/builtin_audio_decoder_factory_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/api/audio_codecs/builtin_audio_decoder_factory_gn/moz.build
+@@ -269,4 +269,14 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "m"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FIX"] = "0"
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FLOAT"] = "1"
++    DEFINES["_GNU_SOURCE"] = True
++
++    OS_LIBS += [
++        "m"
++    ]
++
+ Library("builtin_audio_decoder_factory_gn")
+Index: firefox-113.0/third_party/libwebrtc/api/audio_codecs/builtin_audio_encoder_factory_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/api/audio_codecs/builtin_audio_encoder_factory_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/api/audio_codecs/builtin_audio_encoder_factory_gn/moz.build
+@@ -269,4 +269,14 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "m"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FIX"] = "0"
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FLOAT"] = "1"
++    DEFINES["_GNU_SOURCE"] = True
++
++    OS_LIBS += [
++        "m"
++    ]
++
+ Library("builtin_audio_encoder_factory_gn")
+Index: firefox-113.0/third_party/libwebrtc/api/audio_codecs/isac/audio_decoder_isac_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/api/audio_codecs/isac/audio_decoder_isac_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/api/audio_codecs/isac/audio_decoder_isac_gn/moz.build
+@@ -251,4 +251,14 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "m"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FIX"] = "0"
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FLOAT"] = "1"
++    DEFINES["_GNU_SOURCE"] = True
++
++    OS_LIBS += [
++        "m"
++    ]
++
+ Library("audio_decoder_isac_gn")
+Index: firefox-113.0/third_party/libwebrtc/api/audio_codecs/isac/audio_encoder_isac_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/api/audio_codecs/isac/audio_encoder_isac_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/api/audio_codecs/isac/audio_encoder_isac_gn/moz.build
+@@ -251,4 +251,14 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "m"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FIX"] = "0"
++    DEFINES["WEBRTC_USE_BUILTIN_ISAC_FLOAT"] = "1"
++    DEFINES["_GNU_SOURCE"] = True
++
++    OS_LIBS += [
++        "m"
++    ]
++
+ Library("audio_encoder_isac_gn")
+Index: firefox-113.0/third_party/libwebrtc/common_audio/common_audio_c_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/common_audio/common_audio_c_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/common_audio/common_audio_c_gn/moz.build
+@@ -313,4 +313,13 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "/third_party/libwebrtc/common_audio/signal_processing/filter_ar_fast_q12.c"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["_GNU_SOURCE"] = True
++
++    UNIFIED_SOURCES += [
++        "/third_party/libwebrtc/common_audio/signal_processing/complex_bit_reverse.c",
++        "/third_party/libwebrtc/common_audio/signal_processing/filter_ar_fast_q12.c"
++    ]
++
+ Library("common_audio_c_gn")
+Index: firefox-113.0/third_party/libwebrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor_gn/moz.build
+@@ -246,4 +246,12 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "/third_party/libwebrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor.c"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["_GNU_SOURCE"] = True
++
++    UNIFIED_SOURCES += [
++        "/third_party/libwebrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor.c"
++    ]
++
+ Library("spl_sqrt_floor_gn")
+Index: firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_multiopus_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/modules/audio_coding/webrtc_multiopus_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_multiopus_gn/moz.build
+@@ -238,4 +238,9 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+     DEFINES["WEBRTC_ENABLE_AVX2"] = True
+     DEFINES["_GNU_SOURCE"] = True
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_CODEC_ISAC"] = True
++    DEFINES["_GNU_SOURCE"] = True
++
+ Library("webrtc_multiopus_gn")
+Index: firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_opus_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/modules/audio_coding/webrtc_opus_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_opus_gn/moz.build
+@@ -245,4 +245,9 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+     DEFINES["WEBRTC_ENABLE_AVX2"] = True
+     DEFINES["_GNU_SOURCE"] = True
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_CODEC_ISAC"] = True
++    DEFINES["_GNU_SOURCE"] = True
++
+ Library("webrtc_opus_gn")
+Index: firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_opus_wrapper_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/modules/audio_coding/webrtc_opus_wrapper_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/modules/audio_coding/webrtc_opus_wrapper_gn/moz.build
+@@ -237,4 +237,9 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+     DEFINES["WEBRTC_ENABLE_AVX2"] = True
+     DEFINES["_GNU_SOURCE"] = True
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_CODEC_ISAC"] = True
++    DEFINES["_GNU_SOURCE"] = True
++
+ Library("webrtc_opus_wrapper_gn")
+Index: firefox-113.0/third_party/libwebrtc/modules/desktop_capture/desktop_capture_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/modules/desktop_capture/desktop_capture_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/modules/desktop_capture/desktop_capture_gn/moz.build
+@@ -423,6 +423,38 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/xdg_desktop_portal_utils.cc"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["WEBRTC_USE_PIPEWIRE"] = True
++    DEFINES["_GNU_SOURCE"] = True
++
++    LOCAL_INCLUDES += [
++        "/gfx/angle/checkout/include/",
++        "/third_party/drm/drm/",
++        "/third_party/drm/drm/include/",
++        "/third_party/drm/drm/include/libdrm/",
++        "/third_party/gbm/gbm/",
++        "/third_party/libepoxy/libepoxy/include/",
++        "/third_party/pipewire/"
++    ]
++
++    SOURCES += [
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/base_capturer_pipewire.cc"
++    ]
++
++    UNIFIED_SOURCES += [
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/egl_dmabuf.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/mouse_cursor_monitor_pipewire.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/pipewire_utils.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/restore_token_manager.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/scoped_glib.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/screen_capture_portal_interface.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/screencast_portal.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/screencast_stream_utils.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/shared_screencast_stream.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/wayland/xdg_desktop_portal_utils.cc"
++    ]
++
+ if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["MOZ_X11"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+ 
+     DEFINES["USE_X11"] = "1"
+@@ -514,6 +546,35 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+ 
+     DEFINES["USE_X11"] = "1"
+     DEFINES["WEBRTC_USE_X11"] = True
++
++    OS_LIBS += [
++        "X11",
++        "Xcomposite",
++        "Xdamage",
++        "Xext",
++        "Xfixes",
++        "Xrandr",
++        "Xrender",
++        "Xtst"
++    ]
++
++    UNIFIED_SOURCES += [
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/mouse_cursor_monitor_x11.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/screen_capturer_x11.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/shared_x_display.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/window_capturer_x11.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/window_finder_x11.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/window_list_utils.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/x_atom_cache.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/x_error_trap.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/x_server_pixel_buffer.cc",
++        "/third_party/libwebrtc/modules/desktop_capture/linux/x11/x_window_property.cc"
++    ]
++
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["MOZ_X11"] == "1" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["USE_X11"] = "1"
++    DEFINES["WEBRTC_USE_X11"] = True
+ 
+     OS_LIBS += [
+         "X11",
+Index: firefox-113.0/third_party/libwebrtc/modules/desktop_capture/primitives_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/modules/desktop_capture/primitives_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/modules/desktop_capture/primitives_gn/moz.build
+@@ -172,6 +172,10 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+     DEFINES["WEBRTC_ENABLE_AVX2"] = True
+     DEFINES["_GNU_SOURCE"] = True
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["_GNU_SOURCE"] = True
++
+ if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["MOZ_X11"] == "1" and CONFIG["OS_TARGET"] == "Linux":
+ 
+     DEFINES["USE_X11"] = "1"
+@@ -188,4 +192,8 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+ 
+     DEFINES["USE_X11"] = "1"
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["MOZ_X11"] == "1" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["USE_X11"] = "1"
++
+ Library("primitives_gn")
+Index: firefox-113.0/third_party/libwebrtc/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/moz.build
++++ firefox-113.0/third_party/libwebrtc/moz.build
+@@ -656,6 +656,21 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "/third_party/libwebrtc/third_party/pipewire/pipewire_gn"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DIRS += [
++        "/third_party/libwebrtc/api/audio_codecs/isac/audio_decoder_isac_float_gn",
++        "/third_party/libwebrtc/api/audio_codecs/isac/audio_encoder_isac_float_gn",
++        "/third_party/libwebrtc/modules/audio_coding/isac_c_gn",
++        "/third_party/libwebrtc/modules/audio_coding/isac_gn",
++        "/third_party/libwebrtc/modules/desktop_capture/desktop_capture_gn",
++        "/third_party/libwebrtc/modules/desktop_capture/primitives_gn",
++        "/third_party/libwebrtc/third_party/drm/drm_gn",
++        "/third_party/libwebrtc/third_party/gbm/gbm_gn",
++        "/third_party/libwebrtc/third_party/libepoxy/libepoxy_gn",
++        "/third_party/libwebrtc/third_party/pipewire/pipewire_gn"
++    ]
++
+ if CONFIG["CPU_ARCH"] == "aarch64" and CONFIG["OS_TARGET"] == "OpenBSD":
+ 
+     DIRS += [
+Index: firefox-113.0/third_party/libwebrtc/webrtc_gn/moz.build
+===================================================================
+--- firefox-113.0.orig/third_party/libwebrtc/webrtc_gn/moz.build
++++ firefox-113.0/third_party/libwebrtc/webrtc_gn/moz.build
+@@ -256,4 +256,12 @@ if CONFIG["CPU_ARCH"] == "x86_64" and CO
+         "m"
+     ]
+ 
++if CONFIG["CPU_ARCH"] == "riscv64" and CONFIG["OS_TARGET"] == "Linux":
++
++    DEFINES["_GNU_SOURCE"] = True
++
++    OS_LIBS += [
++        "m"
++    ]
++
+ Library("webrtc_gn")
+Index: firefox-113.0/toolkit/moz.configure
+===================================================================
+--- firefox-113.0.orig/toolkit/moz.configure
++++ firefox-113.0/toolkit/moz.configure
+@@ -1341,6 +1341,7 @@ def webrtc_default(target):
+             "ia64",
+             "mips32",
+             "mips64",
++            "riscv64",
+         )
+         or target.cpu.startswith("ppc")
+     ):

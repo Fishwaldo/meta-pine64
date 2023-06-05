@@ -29,5 +29,5 @@ PASSWD = "\$5\$svJwM1eWQPV5bb\$CgKgw8mrSVcZEBPR1re37qeShy/scdk5GMbKZaSln74"
 EXTRA_USERS_PARAMS = "\
     useradd -p '${PASSWD}' pine64; \
     usermod -p '${PASSWD}' root; \
-    groupmod wheel -a pine64; \
+    groupmod -a pine64 wheel; \
 "

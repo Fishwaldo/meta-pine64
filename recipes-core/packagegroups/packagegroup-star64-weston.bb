@@ -14,4 +14,6 @@ RDEPENDS:packagegroup-star64-weston = " \
     weston \
     sddm \
     ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'weston-xwayland matchbox-terminal', '', d)} \
+    firefox \
+    firefox-l10n-en-us \
 "
