@@ -11,7 +11,7 @@ SRC_URI += " \
    git://github.com/L4ki/Wings-Plasma-Themes.git;protocol=https;branch=main \
    file://metadata.json \
 "
-SRCREV="a501de99fd8d5e89cf02fd1cd2a8cde54e9ec871"
+SRCREV="17300100e0ae82749e0f86cb5ec2e3af2315e76b"
 
 PV = "1.1+git${SRCPV}"
 

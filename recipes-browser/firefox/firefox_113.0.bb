@@ -3,7 +3,7 @@ HOMEPAGE = "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonk
 LICENSE = "MPL-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=dc9b6ecd19a14a54a628edaaf23733bf"
 
-SRC_URI = "https://archive.mozilla.org/pub/firefox/releases/${PV}esr/source/firefox-${PV}.source.tar.xz \
+SRC_URI = "https://archive.mozilla.org/pub/firefox/releases/${PV}/source/firefox-${PV}.source.tar.xz \
            file://0001-Cargo.toml-do-not-abort-on-panic.patch \
            file://0003-rust.configure-do-not-try-to-find-a-suitable-upstrea.patch \
            file://0004-use-asm-sgidefs.h.patch \
@@ -16,9 +16,9 @@ SRC_URI = "https://archive.mozilla.org/pub/firefox/releases/${PV}esr/source/fire
            file://0001-Update-some-prefs.patch \
            file://vendor.js \
            file://firefox.sh \
-           file://0007-force-useGLes-for-riscv64.patch \
            file://mozilla-firefox.desktop \
-           file://mozilla-firefox.png \  
+           file://mozilla-firefox.png \
+           file://0001-force-useGLES-on-riscv.patch \
            "
 
 SRC_URI[sha256sum] = "7a266044cb9d0c63079b3453507ea0c80a23389f4cbf6a4f6fd15146c6072627"
@@ -126,8 +126,7 @@ do_configure() {
         --disable-jemalloc \
         --disable-strip \
         --without-wasm-sandboxed-libraries \
-        --disable-updater \
-        --enable-jit 
+        --disable-updater
 }
 
 do_install() {
@@ -140,7 +139,7 @@ do_install() {
     install -m 0644 ${WORKDIR}/mozilla-firefox.png ${D}${datadir}/pixmaps/
 
     install -m 0644 ${WORKDIR}/vendor.js ${D}${libdir}/${PN}/defaults/pref/vendor.js
-    install -m 0644 -d ${D}${sysconfdir}/profile.d
+    install -d ${D}${sysconfdir}/profile.d
     install -m 0644 ${WORKDIR}/firefox.sh ${D}${sysconfdir}/profile.d/firefox.sh
 
     chown root:root -R ${D}${libdir}

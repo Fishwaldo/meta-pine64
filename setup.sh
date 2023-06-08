@@ -25,7 +25,7 @@ echo "Setting up PinIx Yocto Build"
 declare -A layers
 layers['poky']='git://git.yoctoproject.org/poky|kirkstone|4cc0e9438b450b43749730e128b6b9adb30f9663'
 layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|kirkstone|571e36e20e9d1f27af0eb4545291beeb64f280e2'
-layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|3a5c25c80614f53bbc51d5f209bb638158e4dfdd'
+layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|c6719ea453c0a9decfabe7d5cdeb696a421a83c8'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
 layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|104abe6793180bac03f36fb59355abc8778e3ffd'
 layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|1ba0b84e783b4a5ec83cf883181622538566eb9c'
@@ -48,6 +48,14 @@ do
 		git clone -q $repo layers/$layer && cd layers/$layer && git checkout -q $branch  && git checkout -q $srcrev && cd ../..
 	fi
 done
+
+echo ""
+rustpatch=`md5sum layers/poky/meta/lib/oe/rust.py | awk '{print $1;}'`
+if [ ! $rustpatch = "717271b44ab7b5eb803d088591a82157" ]; then
+	echo "Patching Rust Support in Poky"
+	patch -p1 < patches/rust.patch
+	echo ""
+fi
 
 if [ ! -f layers/poky/oe-init-build-env ]; then
 	echo "Error: Build Repo Layout Invalid"

@@ -1,0 +1,11 @@
+diff --git a/layers/poky/meta/lib/oe/rust.py b/layers/poky/meta/lib/oe/rust.py
+index ec70b34805..3c41694830 100644
+--- a/layers/poky/meta/lib/oe/rust.py
++++ b/layers/poky/meta/lib/oe/rust.py
+@@ -2,4 +2,6 @@
+ def arch_to_rust_arch(arch):
+     if arch == "ppc64le":
+         return "powerpc64le"
++    if arch in ('riscv32', 'riscv64'):
++        return arch + 'gc'        
+     return arch

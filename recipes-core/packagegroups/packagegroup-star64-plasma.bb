@@ -17,9 +17,11 @@ RDEPENDS:packagegroup-star64-plasma = " \
     dbus \
     discover \
     drkonqi \
+    clinfo \
     cmake \
     cups \
     firewalld-applet \
+    firefox \
     git \
     gstreamer1.0 \
     gstreamer1.0-plugins-base \
@@ -54,6 +56,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     libkscreen \
     libksysguard \
     liberation-fonts \
+    mesa-demos \
     milou \
     pipewire \
     pipewire-alsa \
