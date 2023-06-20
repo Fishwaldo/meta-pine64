@@ -4,3 +4,4 @@ build
 layers
 meta-*
 wip/*
+.*

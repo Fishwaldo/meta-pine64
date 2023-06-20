@@ -30,6 +30,29 @@ The Following Images are currently provided:
 *Warning* - Right now, these images might be a bit unstable as we finetune the image configurations. 
 Running apt upgrade *might* break things. 
 
+Building The Images
+===================
+The images are built using the Yocto Project. 
+
+I recommend you build the images in a docker container as there are some dependencies that 
+are dependant upon the host system build tool versions. 
+
+There is a docker container at https://github.com/Fishwaldo/yoctobuilder/pkgs/container/yoctobuilder
+that I used to build the images. To use this container ensure you have podman or docker installed and 
+execute the following command from the meta-pine64 directory on your host system:
+
+```bash
+podman run -it --privileged --mount type=bind,source=$(pwd)/,target=/home/yoctouser/ --userns=keep-id --group-add keep-groups ghcr.io/fishwaldo/yoctobuilder:main
+```
+
+You will end up inside the container. From there, you can execute the bitbake commands such as:
+
+```bash
+bitbake star64-image-minimal
+```
+
+*Note: This image depends upon your userid/groupid being 1000, if it is not, you would have to rebuild the image with your custom userid*
+
 ## Usernames
 
  * root/pine64

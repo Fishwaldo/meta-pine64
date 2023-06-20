@@ -35,7 +35,7 @@
 #MACHINE ?= "edgerouter"
 #
 # This sets the default machine to be qemux86-64 if no other machine is selected:
-MACHINE ??= "star64"
+MACHINE ?= "star64"
 
 #
 # Where to place downloads
@@ -229,7 +229,7 @@ file://.* https://pine64.my-ho.st:8443/sstate-pine64/PATH;downloadfilename=PATH 
 # which will depend on your network.
 # Note: For this to work you also need hash-equivalence passthrough to the matching server
 #
-BB_HASHSERVE_UPSTREAM = "pine64.my-ho.st:8688"
+BB_HASHSERVE_UPSTREAM ?= "pine64.my-ho.st:8688"
 #SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/all/PATH;downloadfilename=PATH"
 
 #
@@ -277,4 +277,4 @@ CONF_VERSION = "2"
 PRSERV_HOST = "localhost:0"
 PARALLEL_MAKE = "-j 4"
 INHERIT += "rm_work"
-RM_WORK_EXCLUDE += "linux-starfive-dev kdoctools"
+RM_WORK_EXCLUDE += "kdoctools"
