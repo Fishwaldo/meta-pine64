@@ -23,4 +23,5 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-gnome \
   ##OEROOT##/../meta-lts-rust \
   ##OEROOT##/../meta-clang \
+  ##OEROOT##/../meta-kde-gear \
   "
