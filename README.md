@@ -1,3 +1,4 @@
+*Please Note:* The PinetabV image is not ready yet!
 
 This is a Yocto Image/Layer for the Star64/PineTabV devices from Pine64
 Please see the corresponding sections below for details.
