@@ -8,7 +8,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 ALLOW_EMPTY:${PN} = "1"
 
 pkg_postinst_ontarget:${PN}() {
-    root=`lsblk -o NAME,LABEL -r | grep root | awk -F' ' '{print $1}'`
+    root=$(eval $(lsblk -oMOUNTPOINT,NAME -P -M | grep 'MOUNTPOINT="/"'); echo $NAME)
     if [[ "$root" == *"mmcblk"* ]]; then
         echo "Resizing $root partition to fill SDCard..."
         psplash-write "MSG Resizing $root partition to fill SDCard..." || true

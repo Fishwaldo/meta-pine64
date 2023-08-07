@@ -17,3 +17,5 @@ RDEPENDS:packagegroup-star64-weston = " \
     firefox \
     mesa-demos \
 "
+
+COMPATIBLE_MACHINE = "star64"

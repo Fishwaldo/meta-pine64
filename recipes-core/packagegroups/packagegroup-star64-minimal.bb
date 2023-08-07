@@ -45,3 +45,5 @@ RDEPENDS:packagegroup-star64-minimal = " \
     cmake \
     meson \
 "
+
+COMPATIBLE_MACHINE = "star64|pinetabv"
