@@ -1,4 +1,4 @@
-SUMMARY = "A small weston gtk3 demo image for Star64"
+SUMMARY = "KDE Plasma image for PineTabV"
 
 require star64-image-minimal.bb
 
@@ -13,7 +13,7 @@ LICENSE = "MIT"
 
 
 IMAGE_INSTALL:append = " \
-    packagegroup-star64-plasma \
+    packagegroup-pinetabv-plasma \
 "
 
-COMPATIBLE_MACHINE = "star64"
+COMPATIBLE_MACHINE = "pinetabv"

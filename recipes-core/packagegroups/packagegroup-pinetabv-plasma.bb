@@ -1,17 +1,19 @@
-DESCRIPTION = "Plasma Star64 Packages"
+DESCRIPTION = "Plasma PineTabV Packages"
 
 PACKAGE_ARCH = "${TUNE_PKGARCH}"
 
 inherit packagegroup
 
 PACKAGES = " \
-    packagegroup-star64-plasma \
+    packagegroup-pinetabv-plasma \
 "
-RDEPENDS:packagegroup-star64-plasma = " \
+RDEPENDS:packagegroup-pinetabv-plasma = " \
     packagegroup-core-sdk \
     packagegroup-kde-frameworks5 \
     packagegroup-kde-gear \
     packagegroup-star64-minimal \
+    alsa-plugins-pulseaudio-conf \
+    alsa-ucm-conf \
     bluedevil \
     breeze \
     dbus \
@@ -32,6 +34,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     gstreamer1.0-omx \
     gstreamer1.0-libav \
     gstreamer1.0-vaapi \
+    iio-sensors-proxy \
     kactivitymanagerd \
     kclock \
     kde-cli-tools \
@@ -113,12 +116,14 @@ RDEPENDS:packagegroup-star64-plasma = " \
     plasma-browser-integration \
     plasma-welcome \
     polkit-kde-agent-1 \
+    powerdevil \
     sddm \
     sddm-kcm \
     systemd \
     systemsettings \
     ttf-noto \
     udisks2 \
+    upower \
     wayland \
     wings-theme \
     wireplumber \
@@ -143,4 +148,4 @@ RDEPENDS:packagegroup-star64-plasma = " \
     xf86-video-modesetting \
 "
 
-COMPATIBLE_MACHINE = "star64"
+COMPATIBLE_MACHINE = "pinetabv"

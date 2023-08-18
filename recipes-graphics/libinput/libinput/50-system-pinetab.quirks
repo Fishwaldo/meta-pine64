@@ -1,0 +1,6 @@
+[PineTab2 and PineTabV TouchPad]
+MatchVendor=0x1018
+MatchProduct=0x1006
+MatchUdevType=touchpad
+MatchBus=usb
+AttrEventCode=-BTN_RIGHT

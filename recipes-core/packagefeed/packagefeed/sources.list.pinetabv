@@ -1,0 +1,2 @@
+# Apt Repo is disabled in these test images
+deb [signed-by=/etc/apt/trusted.gpg.d/pinix.gpg] https://pine64.my-ho.st:8443/ pinix all riscv64 pinetabv

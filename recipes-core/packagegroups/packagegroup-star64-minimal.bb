@@ -44,4 +44,7 @@ RDEPENDS:packagegroup-star64-minimal = " \
     git \
     cmake \
     meson \
+    tree \
 "
+
+COMPATIBLE_MACHINE = "star64|pinetabv"

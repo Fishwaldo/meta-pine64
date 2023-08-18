@@ -1,6 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
-SRC_URI:append:riscv64 = "\
+SRC_URI:append:jh7110 = "\
     file://0002-add-Starfive-OMX-patches.patch \
 "
 #file://0001-fix-chromium.patch
