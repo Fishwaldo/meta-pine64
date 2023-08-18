@@ -18,3 +18,5 @@ PACKAGECONFIG:append = " icu ffmpeg harfbuzz opus libwebp libvpx libevent libpng
 DEPENDS:append:riscv64 = " libwebp-native harfbuzz-native"
 
 COMPATIBLE_MACHINE:riscv64 = "(jh7110)"
+
+PARALLEL_MAKE:pn-qtwebengine = "-j 10"

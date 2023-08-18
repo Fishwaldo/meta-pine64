@@ -25,7 +25,7 @@ echo "Setting up PinIx Yocto Build"
 declare -A layers
 layers['poky']='git://git.yoctoproject.org/poky|kirkstone|4cc0e9438b450b43749730e128b6b9adb30f9663'
 layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|kirkstone|571e36e20e9d1f27af0eb4545291beeb64f280e2'
-layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|ptv|ba895357ee6d0bf53671cf6614d9cdcf268525d7'
+layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|8ab08c866bd6e86c51679d4825ebe4d290fa2419'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
 layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|104abe6793180bac03f36fb59355abc8778e3ffd'
 layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|1ba0b84e783b4a5ec83cf883181622538566eb9c'

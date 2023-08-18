@@ -12,6 +12,8 @@ RDEPENDS:packagegroup-pinetabv-plasma = " \
     packagegroup-kde-frameworks5 \
     packagegroup-kde-gear \
     packagegroup-star64-minimal \
+    alsa-plugins-pulseaudio-conf \
+    alsa-ucm-conf \
     bluedevil \
     breeze \
     dbus \
