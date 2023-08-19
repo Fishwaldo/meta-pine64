@@ -15,12 +15,15 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-python \
   ##OEROOT##/../meta-openembedded/meta-networking \
   ##OEROOT##/../meta-openembedded/meta-filesystems \
+  ##OEROOT##/../meta-openembedded/meta-webserver \
+  ##OEROOT##/../meta-openembedded/meta-gnome \
+  ##OEROOT##/../meta-openembedded/meta-xfce \
+  ##OEROOT##/../meta-openembedded/meta-perl \
   ##OEROOT##/../meta-java \
   ##OEROOT##/../meta-qt5 \
   ##OEROOT##/../yocto-meta-kf5 \
   ##OEROOT##/../yocto-meta-kde \
   ##OEROOT##/../meta-python2 \
-  ##OEROOT##/../meta-openembedded/meta-gnome \
   ##OEROOT##/../meta-lts-rust \
   ##OEROOT##/../meta-clang \
   ##OEROOT##/../meta-kde-gear \
