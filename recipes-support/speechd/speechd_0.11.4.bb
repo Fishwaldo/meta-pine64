@@ -27,7 +27,7 @@ DEPENDS = " \
 
 FILES:${PN} += " \
     ${datadir}/speech-dispatcher \
-    ${libdir}/python3.11/site-packages \
+    ${libdir}/python3.*/site-packages \
     ${libdir}/speech-dispatcher \
     ${systemd_system_unitdir}/speech-dispatcherd.service \
 "

@@ -5,3 +5,5 @@ layers
 meta-*
 wip/*
 .*
+setup.sh
+scripts/*

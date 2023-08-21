@@ -31,7 +31,7 @@ layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master
 layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|1ba0b84e783b4a5ec83cf883181622538566eb9c'
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
 layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'
-layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|ef3e2564fa8b75abffaa2f61a2b63b5c83d9840e'
+layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|7d1b94ae504e69b9e80f0eb3283293b95a131f0e'
 layers['meta-clang']='https://github.com/kraj/meta-clang.git|kirkstone|71321ddf78ea522b87a6b4bffefb14c988a6d921'
 layers['meta-lts-rust']='https://git.yoctoproject.org/git/meta-lts-mixins|kirkstone/rust-1.68|feed1bb0eb4aefb701d582156d7defb0c1fc0473'
 

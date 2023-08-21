@@ -28,3 +28,7 @@ FILES:${PN}-dev += " \
     ${libdir}/libQt5TextToSpeech.prl \
     ${libdir}/mkspecs/modules/ \
 "
+
+FILES:${PN} += " \
+    ${libdir}/plugins/texttospeech/ \
+"
