@@ -25,9 +25,9 @@ echo "Setting up PinIx Yocto Build"
 declare -A layers
 layers['poky']='git://git.yoctoproject.org/poky|kirkstone|fc697fe87412b9b179ae3a68d266ace85bb1fcc6'
 layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|kirkstone|529620141e773080a6a7be4615fb7993204af883'
-layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|8ab08c866bd6e86c51679d4825ebe4d290fa2419'
+layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|49e36737e2431006c217a845e41310816a378403'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
-layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|104abe6793180bac03f36fb59355abc8778e3ffd'
+layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|daa1c79cbf12176e8c8397512f80c0eb4ef6db74'
 layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|1ba0b84e783b4a5ec83cf883181622538566eb9c'
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
 layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'

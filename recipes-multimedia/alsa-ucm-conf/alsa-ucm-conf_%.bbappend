@@ -17,3 +17,4 @@ do_install:append:pinetabv() {
     install -m 0644 ${WORKDIR}/asound.conf ${D}${sysconfdir}/asound.conf
 }
 
+PACKAGE_ARCH = "${MACHINE_ARCH}"

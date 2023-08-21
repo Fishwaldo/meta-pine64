@@ -39,3 +39,5 @@ do_install:pinetabv:append() {
 DEPENDS += " \
     gnupg-native \
 "
+COMPATIBLE_MACHINE = "(star64|pinetabv)"
+PACKAGE_ARCH = "${MACHINE_ARCH}"
