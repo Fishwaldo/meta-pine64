@@ -1,2 +1,2 @@
 PACKAGECONFIG:remove = "networkd resolved nss-resolve"
-PACKAGECONFIG:append = "coredump"
+PACKAGECONFIG:append = "coredump elfutils firstboot"

@@ -1,4 +1,4 @@
-From 9e37248870b2b955293754933c789ca00bca06ef Mon Sep 17 00:00:00 2001
+From 5bb23589f0a7851577d6487e49ccd9cc955c4143 Mon Sep 17 00:00:00 2001
 From: Alexander Kanavin <alex@linutronix.de>
 Date: Fri, 1 Oct 2021 13:00:24 +0200
 Subject: [PATCH] Cargo.toml: do not abort on panic
@@ -8,12 +8,14 @@ OE's rust is configured to unwind, and this setting clashes with it/
 Upstream-Status: Inappropriate [oe-core specific]
 Signed-off-by: Alexander Kanavin <alex@linutronix.de>
 ---
- Cargo.toml | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ Cargo.toml | 2 --
+ 1 file changed, 2 deletions(-)
 
+diff --git a/Cargo.toml b/Cargo.toml
+index cdf6d43ca4..a723e36260 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -51,13 +51,11 @@ opt-level = 1
+@@ -62,13 +62,11 @@ opt-level = 1
  rpath = false
  lto = false
  debug-assertions = true

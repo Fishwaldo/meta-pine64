@@ -4,24 +4,25 @@ LICENSE = "MPL-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=dc9b6ecd19a14a54a628edaaf23733bf"
 
 SRC_URI = "https://archive.mozilla.org/pub/firefox/releases/${PV}/source/firefox-${PV}.source.tar.xz \
-           file://0001-Cargo.toml-do-not-abort-on-panic.patch \
-           file://0003-rust.configure-do-not-try-to-find-a-suitable-upstrea.patch \
-           file://0004-use-asm-sgidefs.h.patch \
-           file://fix-musl-build.patch \
-           file://0001-util.configure-fix-one-occasionally-reproduced-confi.patch \
-           file://0001-rewrite-cargo-host-linker-in-python3.patch \
            file://mozconfig \
-           file://0001-do-not-use-config.sub-target-sys.patch \
-           file://webrtc-riscv64.patch \
-           file://0001-Update-some-prefs.patch \
            file://vendor.js \
            file://firefox.sh \
            file://mozilla-firefox.desktop \
            file://mozilla-firefox.png \
-           file://0001-force-useGLES-on-riscv.patch \
+           file://0001-Cargo.toml-do-not-abort-on-panic.patch \
+           file://0002-rust.configure-do-not-try-to-find-a-suitable-upstrea.patch \
+           file://0003-use-asm-sgidefs.h.patch \
+           file://0004-mozjs60-miscompiles-on-musl-if-built-with-HAVE_THREA.patch \
+           file://0005-util.configure-fix-one-occasionally-reproduced-confi.patch \
+           file://0006-Rewrite-cargo-host-linker-in-python3.patch \
+           file://0007-do-not-use-config.sub-target-sys.patch \
+           file://0008-Update-some-prefs.patch \
+           file://0009-force-useGLES-on-riscv.patch \
            "
 
-SRC_URI[sha256sum] = "7a266044cb9d0c63079b3453507ea0c80a23389f4cbf6a4f6fd15146c6072627"
+
+
+SRC_URI[sha256sum] = "575a0d11b487a03527cc90c5e6d556c09669201cbb584b73442b202ee1d3e2e6"
 
 S = "${WORKDIR}/firefox-${@d.getVar("PV").replace("esr", "")}"
 
@@ -58,6 +59,7 @@ DEPENDS += " \
     zip-native \
     gtk+ \
     libvpx \
+    gcc-runtime \
 "
 
 B = "${WORKDIR}/build"

@@ -1,17 +1,17 @@
-From 2b8f2b1926dbd0e7fada446c5f7a5258bbf1026a Mon Sep 17 00:00:00 2001
+From 5c0d622b8193b74177cec2b3fc480610df387b67 Mon Sep 17 00:00:00 2001
 From: Justin Hammond <justin@dynam.ac>
 Date: Wed, 7 Jun 2023 09:29:11 +0000
 Subject: [PATCH] force useGLES on riscv
 
 ---
- toolkit/xre/glxtest.cpp | 2 +-
+ toolkit/xre/glxtest/glxtest.cpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/toolkit/xre/glxtest.cpp b/toolkit/xre/glxtest.cpp
-index 509675cc44..bfd72c238d 100644
---- a/toolkit/xre/glxtest.cpp
-+++ b/toolkit/xre/glxtest.cpp
-@@ -537,7 +537,7 @@ static bool get_egl_gl_status(EGLDisplay dpy,
+diff --git a/toolkit/xre/glxtest/glxtest.cpp b/toolkit/xre/glxtest/glxtest.cpp
+index cd45db815f..b4686dde3f 100644
+--- a/toolkit/xre/glxtest/glxtest.cpp
++++ b/toolkit/xre/glxtest/glxtest.cpp
+@@ -435,7 +435,7 @@ static bool get_egl_gl_status(EGLDisplay dpy,
    PFNGLGETSTRING glGetString =
        cast<PFNGLGETSTRING>(eglGetProcAddress("glGetString"));
  

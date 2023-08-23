@@ -1,41 +1,49 @@
-From 99596dd6e8ee004f9998d75caf2c7f7007e3b70c Mon Sep 17 00:00:00 2001
+From 961149a8c1ee0705d0fe7ab8920a55be88c89ce2 Mon Sep 17 00:00:00 2001
 From: Justin Hammond <justin@dynam.ac>
 Date: Mon, 5 Jun 2023 09:20:05 +0000
 Subject: [PATCH] do not use config.sub target sys
 
 ---
- build/moz.configure/init.configure | 23 ++++++++++++-----------
- 1 file changed, 12 insertions(+), 11 deletions(-)
+ build/moz.configure/init.configure | 31 +++++++++++++++---------------
+ 1 file changed, 16 insertions(+), 15 deletions(-)
 
 diff --git a/build/moz.configure/init.configure b/build/moz.configure/init.configure
-index 662d75e0e5..b96e4bc11e 100644
+index 34d917d790..055109f802 100644
 --- a/build/moz.configure/init.configure
 +++ b/build/moz.configure/init.configure
-@@ -649,17 +649,18 @@ def config_sub(shell, triplet):
+@@ -649,21 +649,22 @@ def config_sub(shell, triplet):
      config_sub = os.path.join(os.path.dirname(__file__), "..", "autoconf", "config.sub")
      # Config.sub doesn't like the *-windows-msvc/*-windows-gnu triplets, so
      # munge those before and after calling config.sub.
 -    suffix = None
--    mingw_suffix = "-mingw32"
--    for check_suffix in ("-windows-msvc", "-windows-gnu"):
+-    munging = {
+-        "-windows-msvc": "-mingw32",
+-        "-windows-gnu": "-mingw32",
+-    }
+-    for check_suffix, replacement in munging.items():
 -        if triplet.endswith(check_suffix):
 -            suffix = check_suffix
--            triplet = triplet[: -len(suffix)] + mingw_suffix
+-            triplet = triplet[: -len(suffix)] + replacement
+-            break
 -    result = check_cmd_output(shell, config_sub, triplet).strip()
 -    if suffix:
--        assert result.endswith(mingw_suffix)
--        result = result[: -len(mingw_suffix)] + suffix
+-        assert result.endswith(replacement)
+-        result = result[: -len(replacement)] + suffix
 -    return result
 +    #suffix = None
-+    #mingw_suffix = "-mingw32"
-+    #for check_suffix in ("-windows-msvc", "-windows-gnu"):
++    #munging = {
++    #    "-windows-msvc": "-mingw32",
++    #    "-windows-gnu": "-mingw32",
++    #}
++    #for check_suffix, replacement in munging.items():
 +    #    if triplet.endswith(check_suffix):
 +    #        suffix = check_suffix
-+    #        triplet = triplet[: -len(suffix)] + mingw_suffix
++    #        triplet = triplet[: -len(suffix)] + replacement
++    #        break
 +    #result = check_cmd_output(shell, config_sub, triplet).strip()
 +    #if suffix:
-+    #    assert result.endswith(mingw_suffix)
-+    #    result = result[: -len(mingw_suffix)] + suffix
++    #    assert result.endswith(replacement)
++    #    result = result[: -len(replacement)] + suffix
 +    #return result
 +    return triplet
  

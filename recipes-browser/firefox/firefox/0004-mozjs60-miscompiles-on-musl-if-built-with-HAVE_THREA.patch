@@ -1,0 +1,25 @@
+From e26385b0ceb108ec86680edbe899defd3628b776 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Tue, 22 Aug 2023 10:19:05 +0000
+Subject: [PATCH] mozjs60 miscompiles on musl if built with
+ HAVE_THREAD_TLS_KEYWORD:
+ https://github.com/void-linux/void-packages/issues/2598
+
+---
+ js/src/old-configure.in | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/js/src/old-configure.in b/js/src/old-configure.in
+index 032267a235..440bf82241 100644
+--- a/js/src/old-configure.in
++++ b/js/src/old-configure.in
+@@ -807,6 +807,9 @@ if test "$ac_cv_thread_keyword" = yes; then
+     *-android*|*-linuxandroid*)
+       :
+       ;;
++    *-musl*)
++      :
++      ;;
+     *)
+       AC_DEFINE(HAVE_THREAD_TLS_KEYWORD)
+       ;;

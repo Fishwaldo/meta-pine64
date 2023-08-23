@@ -1,4 +1,4 @@
-From b13cad4abc53f816f64c8b0af70cb46820746c72 Mon Sep 17 00:00:00 2001
+From 59a02c5ca2c537f1ecbcde4b5cb5db4b1ed468bf Mon Sep 17 00:00:00 2001
 From: Changqing Li <changqing.li@windriver.com>
 Date: Thu, 11 Nov 2021 16:05:54 +0800
 Subject: [PATCH] util.configure: fix one occasionally reproduced configure
@@ -33,10 +33,10 @@ Signed-off-by: Changqing Li <changqing.li@windriver.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/build/moz.configure/util.configure b/build/moz.configure/util.configure
-index 8f35e89c73..84e256647d 100644
+index b017a10f84..e84b859801 100644
 --- a/build/moz.configure/util.configure
 +++ b/build/moz.configure/util.configure
-@@ -222,7 +222,7 @@ def try_invoke_compiler(compiler, language, source, flags=None, onerror=None):
+@@ -256,7 +256,7 @@ def try_invoke_compiler(
          "C++": ".cpp",
      }[language]
  
@@ -45,6 +45,3 @@ index 8f35e89c73..84e256647d 100644
      try:
          source = source.encode("ascii", "replace")
  
--- 
-2.17.1
-

@@ -1,4 +1,4 @@
-From de7e18fed40ab9563601715e4acb2222bc98c074 Mon Sep 17 00:00:00 2001
+From 2182915fb51836bac55f49c5ca180881432a2b32 Mon Sep 17 00:00:00 2001
 From: Justin Hammond <justin@dynam.ac>
 Date: Mon, 5 Jun 2023 10:25:38 +0000
 Subject: [PATCH] Update some prefs
@@ -9,10 +9,10 @@ Subject: [PATCH] Update some prefs
  2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index 5173c16303..0bf1034a6e 100644
+index cf34acc434..24caa274b2 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
-@@ -8215,7 +8215,7 @@
+@@ -8190,7 +8190,7 @@
  # interpretation of physical units such as "pt".
  - name: layout.css.dpi
    type: int32_t
@@ -20,12 +20,12 @@ index 5173c16303..0bf1034a6e 100644
 +  value: 0
    mirror: always
  
- # Whether @layer is enabled
+ # Whether Container Queries are enabled
 diff --git a/modules/libpref/init/all.js b/modules/libpref/init/all.js
-index 3c82b43030..083845f06c 100644
+index a366fdaeb8..b9f33b0781 100644
 --- a/modules/libpref/init/all.js
 +++ b/modules/libpref/init/all.js
-@@ -954,6 +954,7 @@ pref("privacy.purge_trackers.consider_entity_list", false);
+@@ -900,6 +900,7 @@ pref("privacy.purge_trackers.consider_entity_list", false);
  pref("dom.event.contextmenu.enabled",       true);
  
  pref("javascript.enabled",                  true);
@@ -33,6 +33,3 @@ index 3c82b43030..083845f06c 100644
  pref("javascript.options.asmjs",                  true);
  pref("javascript.options.wasm",                   true);
  pref("javascript.options.wasm_trustedprincipals", true);
--- 
-2.25.1
-

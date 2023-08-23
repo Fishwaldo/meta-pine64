@@ -1,4 +1,4 @@
-From 749ba11fd6a69c8180945d4866415d16ae06a9c0 Mon Sep 17 00:00:00 2001
+From ba93b9d4068505b3c7327375f53cb0fe1662930e Mon Sep 17 00:00:00 2001
 From: Alexander Kanavin <alex@linutronix.de>
 Date: Fri, 1 Oct 2021 13:02:17 +0200
 Subject: [PATCH] rust.configure: do not try to find a suitable upstream target
@@ -12,10 +12,10 @@ Signed-off-by: Alexander Kanavin <alex@linutronix.de>
  1 file changed, 2 insertions(+), 32 deletions(-)
 
 diff --git a/build/moz.configure/rust.configure b/build/moz.configure/rust.configure
-index cd77d72bb7..4b6481cbe3 100644
+index 7a2fd1ae70..e11f13b253 100644
 --- a/build/moz.configure/rust.configure
 +++ b/build/moz.configure/rust.configure
-@@ -459,33 +459,7 @@ def assert_rust_compile(host_or_target, rustc_target, rustc):
+@@ -486,33 +486,7 @@ def assert_rust_compile(host_or_target, rustc_target, rustc):
  def rust_host_triple(
      rustc, host, compiler_info, rustc_host, rust_supported_targets, arm_target
  ):
@@ -50,7 +50,7 @@ index cd77d72bb7..4b6481cbe3 100644
  
  
  @depends(
-@@ -495,11 +469,7 @@ def rust_host_triple(
+@@ -522,11 +496,7 @@ def rust_host_triple(
  def rust_target_triple(
      rustc, target, compiler_info, rust_supported_targets, arm_target
  ):
