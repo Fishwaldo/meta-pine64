@@ -48,8 +48,10 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kpipewire \
     kscreen \
     kscreenlocker \
+    ksshaskpass \
     ksystemstats \
     kvantum \
+    kwallet-pam \
     kwayland-integration \
     kweather \
     kwin \
