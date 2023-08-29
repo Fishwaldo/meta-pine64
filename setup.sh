@@ -25,7 +25,7 @@ echo "Setting up PinIx Yocto Build"
 declare -A layers
 layers['poky']='git://git.yoctoproject.org/poky|kirkstone|fc697fe87412b9b179ae3a68d266ace85bb1fcc6'
 layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|kirkstone|529620141e773080a6a7be4615fb7993204af883'
-layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|55a02449b3b621dfcc4b83cbdb579817d7479887'
+layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|ea2bc5eb8f03e126ff4a132b7f160c57edde4adc'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
 layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|e17d3eab6de7289987216d2c5126e67798a6e7fa'
 layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|11cf088e8e4e3ef0ca110757c1dbd2877a6e1e3b'
@@ -35,7 +35,13 @@ layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|8
 layers['meta-clang']='https://github.com/kraj/meta-clang.git|kirkstone|71321ddf78ea522b87a6b4bffefb14c988a6d921'
 layers['meta-lts-rust']='https://git.yoctoproject.org/git/meta-lts-mixins|kirkstone/rust-1.68|feed1bb0eb4aefb701d582156d7defb0c1fc0473'
 
-echo "Checking Layers..."
+if [ -f .nosync ]; then
+	echo "Checking Layers... (not syncing)"
+	NOSYNC=1
+else 
+	echo "Checking Layers... (syncing)"
+	NOSYNC=0
+fi
 echo ""
 
 for layer in ${!layers[@]};
@@ -47,8 +53,10 @@ do
 		echo "Cloning $layer"
 		git clone -q $repo layers/$layer && cd layers/$layer && git checkout -q $branch  && git checkout -q $srcrev && cd ../..
 	else
-		echo "Updating $layer to $srcrev"
-		cd layers/$layer && git fetch -q && git checkout -q $branch && git checkout -q $srcrev && cd ../..
+		if [ $NOSYNC -eq 0 ]; then
+			echo "Updating $layer to $srcrev"
+			cd layers/$layer && git fetch -q && git checkout -q $branch && git checkout -q $srcrev && cd ../..
+		fi
 	fi
 done
 
