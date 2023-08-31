@@ -1,0 +1,25 @@
+From e541ef66421fe2dd893d551ade81a507b9c37a7d Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Wed, 30 Aug 2023 08:13:33 +0000
+Subject: [PATCH] add libatomic for help plugin on riscv
+
+---
+ src/plugins/help/help.pro | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/plugins/help/help.pro b/src/plugins/help/help.pro
+index 1cb2f11156..8eb049a721 100644
+--- a/src/plugins/help/help.pro
++++ b/src/plugins/help/help.pro
+@@ -75,6 +75,8 @@ osx {
+     }
+ }
+ 
++LIBS += -latomic
++
+ QLITEHTML_DIR = $$PWD/../../libs/qlitehtml
+ exists($$QLITEHTML_DIR/src/qlitehtml.pri) {
+     exists($$QLITEHTML_DIR/src/3rdparty/litehtml/CMakeLists.txt)|!isEmpty(LITEHTML_INSTALL_DIR) {
+-- 
+2.25.1
+

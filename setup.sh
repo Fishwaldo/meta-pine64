@@ -28,9 +28,8 @@ layers['meta-openembedded']='https://github.com/openembedded/meta-openembedded|k
 layers['meta-riscv']='https://github.com/Fishwaldo/meta-riscv.git|master|ea2bc5eb8f03e126ff4a132b7f160c57edde4adc'
 layers['meta-qt5']='https://github.com/meta-qt5/meta-qt5.git|master|cf6ffcbad5275a3428f6046468a0c9d572e813d1'
 layers['yocto-meta-kf5']='https://github.com/Fishwaldo/yocto-meta-kf5.git|master|e17d3eab6de7289987216d2c5126e67798a6e7fa'
-layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|11cf088e8e4e3ef0ca110757c1dbd2877a6e1e3b'
+layers['yocto-meta-kde']='https://github.com/Fishwaldo/yocto-meta-kde.git|master|066c10ac3b4bbf8b724e8b7f6711d76fef1d7e1b'
 layers['meta-python2']='https://git.openembedded.org/meta-python2|kirkstone|f02882e2aa9279ca7becca8d0cedbffe88b5a253'
-layers['meta-java']='https://github.com/meta-java/meta-java.git|kirkstone|8bf79fc2002bb83c6439d25bb63e4206894c2d10'
 layers['meta-kde-gear']='https://github.com/Fishwaldo/meta-kde-gear.git|master|81458800c7dfc0ef1d6e70b35d7a8504a3b263b4'
 layers['meta-clang']='https://github.com/kraj/meta-clang.git|kirkstone|71321ddf78ea522b87a6b4bffefb14c988a6d921'
 layers['meta-lts-rust']='https://git.yoctoproject.org/git/meta-lts-mixins|kirkstone/rust-1.68|feed1bb0eb4aefb701d582156d7defb0c1fc0473'
@@ -61,12 +60,12 @@ do
 done
 
 echo ""
-rustpatch=`md5sum layers/poky/meta/lib/oe/rust.py | awk '{print $1;}'`
-if [ ! $rustpatch = "717271b44ab7b5eb803d088591a82157" ]; then
-	echo "Patching Rust Support in Poky"
-	patch -p1 < patches/rust.patch
-	echo ""
-fi
+# rustpatch=`md5sum layers/poky/meta/lib/oe/rust.py | awk '{print $1;}'`
+# if [ ! $rustpatch = "717271b44ab7b5eb803d088591a82157" ]; then
+# 	echo "Patching Rust Support in Poky"
+# 	patch -p1 < patches/rust.patch
+# 	echo ""
+# fi
 
 if [ ! -f layers/poky/oe-init-build-env ]; then
 	echo "Error: Build Repo Layout Invalid"

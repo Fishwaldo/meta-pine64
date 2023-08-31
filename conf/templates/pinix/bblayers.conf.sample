@@ -20,7 +20,6 @@ BBLAYERS ?= " \
   ##OEROOT##/../meta-openembedded/meta-filesystems \
   ##OEROOT##/../meta-openembedded/meta-webserver \
   ##OEROOT##/../meta-openembedded/meta-perl \
-  ##OEROOT##/../meta-java \
   ##OEROOT##/../meta-qt5 \
   ##OEROOT##/../yocto-meta-kf5 \
   ##OEROOT##/../yocto-meta-kde \

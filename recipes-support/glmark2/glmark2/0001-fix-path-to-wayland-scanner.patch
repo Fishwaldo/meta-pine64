@@ -1,0 +1,25 @@
+From cbe849eab45de3db14a2228254632cace3387bda Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Thu, 31 Aug 2023 07:44:08 +0000
+Subject: [PATCH] fix path to wayland-scanner
+
+---
+ src/wscript_build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/wscript_build b/src/wscript_build
+index a01c8a8..90f0283 100644
+--- a/src/wscript_build
++++ b/src/wscript_build
+@@ -51,7 +51,7 @@ else:
+ 
+ if 'WAYLAND_SCANNER_wayland_scanner' in bld.env.keys():
+     def wayland_scanner_cmd(arg, src):
+-        return '%s %s < %s > ${TGT}' % (bld.env['WAYLAND_SCANNER_wayland_scanner'], arg, src)
++        return 'wayland-scanner %s < %s > ${TGT}' % ( arg, src)
+ 
+     def wayland_proto_src_path(proto, ver):
+         wp_dir = bld.env['WAYLAND_PROTOCOLS_pkgdatadir']
+-- 
+2.25.1
+

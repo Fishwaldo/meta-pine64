@@ -1,0 +1,25 @@
+From beb68d87d50955c491e9336a41605ba2ca2ef431 Mon Sep 17 00:00:00 2001
+From: Justin Hammond <justin@dynam.ac>
+Date: Thu, 31 Aug 2023 07:29:21 +0000
+Subject: [PATCH] fix configure.ac calling AM_INIT_AUTOMAKE twice
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 98cab791..15946bed 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -197,7 +197,7 @@ LIBTOOL_EXPORT_OPTIONS=
+ AC_SUBST(LIBTOOL_EXPORT_OPTIONS)
+ 
+ dnl Set the Version
+-AM_INIT_AUTOMAKE
++dnl AM_INIT_AUTOMAKE
+ AM_MAINTAINER_MODE
+ 
+ AC_CONFIG_HEADERS(config.h)
+-- 
+2.25.1
+

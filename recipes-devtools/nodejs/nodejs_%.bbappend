@@ -4,3 +4,4 @@ SRC_URI += "file://0001-fix-includes.patch"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
+COMPATIBLE_HOST:riscv64 = ".*riscv64.*"

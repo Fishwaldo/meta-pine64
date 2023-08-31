@@ -22,6 +22,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     cups \
     firewalld-applet \
     firefox \
+    gimp \
     git \
     gstreamer1.0 \
     gstreamer1.0-plugins-base \

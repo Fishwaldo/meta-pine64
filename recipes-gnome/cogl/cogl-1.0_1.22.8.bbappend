@@ -1,0 +1,1 @@
+ERDEPENDS_GLES2 = "mesa-pvr"
