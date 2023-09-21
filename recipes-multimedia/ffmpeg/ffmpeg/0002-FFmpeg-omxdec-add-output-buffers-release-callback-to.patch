@@ -1,0 +1,270 @@
+From 9b8f6e9e4c434fee6b36af655c022868a23c1edc Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:15:38 +0800
+Subject: [PATCH] FFmpeg: omxdec : add output buffers release callback to
+ reduce memcpy
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...t-buffers-release-callback-to-reduce.patch | 252 ++++++++++++++++++
+ 1 file changed, 252 insertions(+)
+ create mode 100644 package/ffmpeg/0023-omxdec-add-output-buffers-release-callback-to-reduce.patch
+
+diff --git a/package/ffmpeg/0023-omxdec-add-output-buffers-release-callback-to-reduce.patch b/package/ffmpeg/0023-omxdec-add-output-buffers-release-callback-to-reduce.patch
+new file mode 100644
+index 0000000..4828f86
+--- /dev/null
++++ b/package/ffmpeg/0023-omxdec-add-output-buffers-release-callback-to-reduce.patch
+@@ -0,0 +1,252 @@
++From 0f054a4a66e82d8f644acb8bf2a0b637cfee9aa8 Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 11:52:49 +0800
++Subject: [PATCH 2/8] omxdec : add output buffers release callback to reduce
++ memcpy
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/allcodecs.c |   8 +--
++ libavcodec/omxdec.c    | 131 +++++++++++++++++++++++++++++++++++------
++ 2 files changed, 116 insertions(+), 23 deletions(-)
++
++diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
++index 69627df..cb5b3d7 100644
++--- a/libavcodec/allcodecs.c
+++++ b/libavcodec/allcodecs.c
++@@ -29,6 +29,10 @@
++ #include "avcodec.h"
++ #include "version.h"
++ 
+++extern AVCodec ff_h264_omx_decoder;
+++extern AVCodec ff_hevc_omx_encoder;
+++extern AVCodec ff_hevc_omx_decoder;
+++extern AVCodec ff_mjpeg_omx_decoder;
++ extern AVCodec ff_a64multi_encoder;
++ extern AVCodec ff_a64multi5_encoder;
++ extern AVCodec ff_aasc_decoder;
++@@ -792,9 +796,6 @@ extern AVCodec ff_h264_cuvid_decoder;
++ extern AVCodec ff_h264_mf_encoder;
++ extern AVCodec ff_h264_nvenc_encoder;
++ extern AVCodec ff_h264_omx_encoder;
++-extern AVCodec ff_h264_omx_decoder;
++-extern AVCodec ff_hevc_omx_encoder;
++-extern AVCodec ff_hevc_omx_decoder;
++ extern AVCodec ff_h264_qsv_encoder;
++ extern AVCodec ff_h264_v4l2m2m_encoder;
++ extern AVCodec ff_h264_vaapi_encoder;
++@@ -817,7 +818,6 @@ extern AVCodec ff_libkvazaar_encoder;
++ extern AVCodec ff_mjpeg_cuvid_decoder;
++ extern AVCodec ff_mjpeg_qsv_encoder;
++ extern AVCodec ff_mjpeg_qsv_decoder;
++-extern AVCodec ff_mjpeg_omx_decoder;
++ extern AVCodec ff_mjpeg_vaapi_encoder;
++ extern AVCodec ff_mp3_mf_encoder;
++ extern AVCodec ff_mpeg1_cuvid_decoder;
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index c518542..afcba9b 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -34,6 +34,7 @@
++ #include <stdlib.h>
++ #include <sys/time.h>
++ 
+++#include "libavcodec/decode.h"
++ #include "libavutil/avstring.h"
++ #include "libavutil/avutil.h"
++ #include "libavutil/common.h"
++@@ -355,6 +356,7 @@ typedef struct OMXCodecContext {
++     int eos_sent, got_eos, evnet_bufferflag, first_get_outbuffer;
++ 
++     int extradata_sent;
+++    int has_cleanup;
++ 
++     uint8_t *output_buf;
++     int output_buf_size;
++@@ -943,6 +945,7 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
++ static av_cold void cleanup(OMXCodecContext *s)
++ {
++     int i, executing;
+++    OMX_BUFFERHEADERTYPE *buffer;
++ 
++     pthread_mutex_lock(&s->state_mutex);
++     executing = s->state == OMX_StateExecuting;
++@@ -953,17 +956,24 @@ static av_cold void cleanup(OMXCodecContext *s)
++         wait_for_state(s, OMX_StateIdle);
++         OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
++         for (i = 0; i < s->num_in_buffers; i++) {
++-            OMX_BUFFERHEADERTYPE *buffer = get_buffer(&s->input_mutex, &s->input_cond,
+++            buffer = get_buffer(&s->input_mutex, &s->input_cond,
++                                                       &s->num_free_in_buffers, s->free_in_buffers, 1);
++             if (s->input_zerocopy)
++                 buffer->pBuffer = NULL;
++             OMX_FreeBuffer(s->handle, s->in_port, buffer);
++         }
++-        for (i = 0; i < s->num_out_buffers; i++) {
++-            OMX_BUFFERHEADERTYPE *buffer = get_buffer(&s->output_mutex, &s->output_cond,
++-                                                      &s->num_done_out_buffers, s->done_out_buffers, 1);
+++
+++        while (buffer = get_buffer(&s->output_mutex, &s->output_cond,
+++                    &s->num_done_out_buffers, s->done_out_buffers, 0)) {
++             OMX_FreeBuffer(s->handle, s->out_port, buffer);
+++            s->num_out_buffers--;
+++        }
+++
+++        if (s->num_out_buffers) {
+++            s->has_cleanup = 1;
+++            return;
++         }
+++
++         wait_for_state(s, OMX_StateLoaded);
++     }
++     if (s->handle) {
++@@ -1099,6 +1109,94 @@ fail:
++     return ret;
++ }
++ 
+++static void omx_free_out_buffer(void *opaque, uint8_t *unused)
+++{
+++    OMX_ERRORTYPE err;
+++    OMX_BUFFERHEADERTYPE *buffer = opaque;
+++    OMXCodecContext *s = buffer->pAppPrivate;
+++
+++    if (!s->has_cleanup) {
+++        err = OMX_FillThisBuffer(s->handle, buffer);
+++        if (err != OMX_ErrorNone) {
+++            append_buffer(&s->output_mutex, &s->output_cond, &s->num_done_out_buffers, s->done_out_buffers, buffer);
+++            av_log(s->avctx, AV_LOG_ERROR, "OMX_FillThisBuffer failed, err: %x\n", err);
+++        }
+++    } else {
+++        OMX_FreeBuffer(s->handle, s->out_port, buffer);
+++        s->num_out_buffers--;
+++        if (!s->num_out_buffers) {
+++            wait_for_state(s, OMX_StateLoaded);
+++            if (s->handle) {
+++                s->omx_context->ptr_FreeHandle(s->handle);
+++                s->handle = NULL;
+++            }
+++
+++            omx_deinit(s->omx_context);
+++            s->omx_context = NULL;
+++            if (s->mutex_cond_inited) {
+++                pthread_cond_destroy(&s->state_cond);
+++                pthread_mutex_destroy(&s->state_mutex);
+++                pthread_cond_destroy(&s->input_cond);
+++                pthread_mutex_destroy(&s->input_mutex);
+++                pthread_cond_destroy(&s->output_cond);
+++                pthread_mutex_destroy(&s->output_mutex);
+++                pthread_cond_destroy(&s->disableEVnt_cond);
+++                pthread_mutex_destroy(&s->disableEVnt_mutex);
+++                s->mutex_cond_inited = 0;
+++            }
+++            OMXDecodeQueueDestory(&s->decode_pts_queue);
+++            av_freep(&s->decode_pts_queue);
+++            av_freep(&s->in_buffer_headers);
+++            av_freep(&s->out_buffer_headers);
+++            av_freep(&s->free_in_buffers);
+++            av_freep(&s->done_out_buffers);
+++            av_freep(&s->output_buf);
+++        }
+++    }
+++}
+++
+++static int omx_buf_to_swframe(OMXCodecContext *s, AVFrame *frame, OMX_BUFFERHEADERTYPE *buffer)
+++{
+++    int ret;
+++    uint8_t *dst[4];
+++    int linesize[4];
+++
+++    frame->buf[0] = av_buffer_create((char *)buffer->pBuffer, buffer->nFilledLen, omx_free_out_buffer, buffer, 0);
+++
+++    if (!frame->buf[0])
+++        return AVERROR(ENOMEM);
+++
+++    ret = av_image_fill_arrays(dst, linesize, buffer->pBuffer,
+++                               s->avctx->pix_fmt, s->stride, s->plane_size, 1);
+++    if (ret < 0){
+++        av_log(s->avctx, AV_LOG_ERROR, "av_image_fill_arrays ret:%d\n", ret);
+++        return AVERROR(EINVAL);
+++    }
+++
+++    frame->linesize[0] = linesize[0];
+++    frame->data[0] = frame->buf[0]->data;
+++
+++    /* fixup special cases */
+++    switch (s->avctx->pix_fmt) {
+++    case AV_PIX_FMT_NV12:
+++    case AV_PIX_FMT_NV21:
+++        frame->linesize[1] = linesize[1];
+++        frame->data[1] = dst[1];
+++        break;
+++
+++    case AV_PIX_FMT_YUV420P:
+++        frame->linesize[1] = linesize[1];
+++        frame->linesize[2] = linesize[2];
+++        frame->data[1] = dst[1];
+++        frame->data[2] = dst[2];
+++        break;
+++
+++    default:
+++        break;
+++    }
+++
+++    return 0;
+++}
++ 
++ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++                            int *got_packet, AVPacket *pkt)
++@@ -1111,9 +1209,6 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++ 
++     AVFrame *avframe = data;
++ 
++-    uint8_t *dst[4];
++-    int linesize[4];
++-
++     av_log(avctx, AV_LOG_VERBOSE, "s->decode_flag: %d\n", s->decode_flag);
++     av_log(avctx, AV_LOG_VERBOSE, "avctx->time_base: %d/%d \n", avctx->time_base.num, avctx->time_base.den);
++     av_log(avctx, AV_LOG_VERBOSE, "avctx->pkt_timebase: %d/%d \n", avctx->pkt_timebase.num, avctx->pkt_timebase.den);
++@@ -1226,20 +1321,21 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++         if (buffer->nFlags & OMX_BUFFERFLAG_EOS)
++             s->got_eos = 1;
++ 
++-        if ((ret = ff_get_buffer(avctx, avframe, 0)) < 0) {
++-            av_log(avctx, AV_LOG_ERROR, "Unable to allocate buffer\n");
+++        avframe->width  = avctx->width;
+++        avframe->height = avctx->height;
+++
+++        ret = ff_decode_frame_props(avctx, avframe);
+++        if(ret < 0) {
+++            av_log(avctx, AV_LOG_ERROR, "Unable to fill buffer props\n");
++             goto end;
++         }
++ 
++-        ret = av_image_fill_arrays(dst, linesize, buffer->pBuffer,
++-                                   avctx->pix_fmt, s->stride, s->plane_size, 1);
++-        if (ret < 0){
++-            av_log(avctx, AV_LOG_ERROR, "av_image_fill_arrays ret:%d\n", ret);
+++        ret = omx_buf_to_swframe(s, avframe, buffer);
+++        if(ret < 0) {
+++            av_log(avctx, AV_LOG_ERROR, "Unable to alloce frame\n");
++             goto end;
++         }
++ 
++-        av_image_copy(avframe->data, avframe->linesize, (const uint8_t**)dst, linesize, 
++-                            avctx->pix_fmt, avctx->width, avctx->height);
++         if (pkt->pts) {
++             if (OMXDecodeQueueEmpty(&s->decode_pts_queue) != 0){
++                 av_log(avctx, AV_LOG_ERROR, "The queue of decode pts is empty.\n");
++@@ -1251,10 +1347,7 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++         s->decode_flag += 1;
++         *got_packet = 1;
++ 
++-        /*
++-        if ((ret = av_frame_ref(data, avframe)) < 0)
++-            goto end;
++-        */
+++        return ret;
++ 
++ end:     
++         err = OMX_FillThisBuffer(s->handle, buffer);
++-- 
++2.25.1
++

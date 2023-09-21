@@ -15,6 +15,7 @@ RDEPENDS:packagegroup-star64-weston = " \
     sddm \
     ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'weston-xwayland matchbox-terminal', '', d)} \
     firefox \
+    refined-h264ify \
     mesa-demos \
 "
 

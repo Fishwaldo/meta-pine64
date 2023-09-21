@@ -45,7 +45,6 @@ RDEPENDS:packagegroup-star64-plasma = " \
     kirigami-addons \
     kmenuedit \
     konsole \
-    konqueror \
     kpipewire \
     kscreen \
     kscreenlocker \
@@ -116,6 +115,7 @@ RDEPENDS:packagegroup-star64-plasma = " \
     plasma-browser-integration \
     plasma-welcome \
     polkit-kde-agent-1 \
+    refined-h264ify \
     sddm \
     sddm-kcm \
     systemd \

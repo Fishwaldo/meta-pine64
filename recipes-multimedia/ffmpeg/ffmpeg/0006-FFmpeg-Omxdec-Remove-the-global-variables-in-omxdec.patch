@@ -1,0 +1,103 @@
+From 53e3b80227f92f5611b88afdc4c7f1c086cdb1ae Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:20:24 +0800
+Subject: [PATCH] FFmpeg: Omxdec: Remove the global variables in omxdec
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...e-global-variables-in-omxdec-it-make.patch | 86 +++++++++++++++++++
+ 1 file changed, 86 insertions(+)
+ create mode 100644 package/ffmpeg/0027-Omxdec-Remove-the-global-variables-in-omxdec-it-make.patch
+
+diff --git a/package/ffmpeg/0027-Omxdec-Remove-the-global-variables-in-omxdec-it-make.patch b/package/ffmpeg/0027-Omxdec-Remove-the-global-variables-in-omxdec-it-make.patch
+new file mode 100644
+index 0000000..ed72fc1
+--- /dev/null
++++ b/package/ffmpeg/0027-Omxdec-Remove-the-global-variables-in-omxdec-it-make.patch
+@@ -0,0 +1,86 @@
++From d44bd33ca4fa0975f284279916f8709282bfe020 Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 13:57:24 +0800
++Subject: [PATCH 6/8] Omxdec: Remove the global variables in omxdec, it make
++ issue in mutithread.
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 25 ++++++++++++-------------
++ 1 file changed, 12 insertions(+), 13 deletions(-)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index d268454..aa3ddea 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -48,10 +48,6 @@
++ #include "internal.h"
++ #include "profiles.h"
++ 
++-int evnet_bufferflag;
++-int dec_out_height;
++-int dec_out_width;
++-int dec_pix_fmt;
++ 
++ #ifdef OMX_SKIP64BIT
++ static OMX_TICKS to_omx_ticks(int64_t value)
++@@ -354,6 +350,9 @@ typedef struct OMXCodecContext {
++     int mutex_cond_inited;
++ 
++     int eos_sent, got_eos, evnet_bufferflag, first_get_outbuffer;
+++    int dec_out_height;
+++    int dec_out_width;
+++    int dec_pix_fmt;
++ 
++     int extradata_sent;
++     int has_cleanup;
++@@ -475,11 +474,11 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, O
++             }
++             if (port_params.eDir == OMX_DirOutput) {
++                 out_port_params = port_params;
++-                dec_out_width = out_port_params.format.video.nFrameWidth;
++-                dec_out_height = out_port_params.format.video.nFrameHeight;
++-                dec_pix_fmt = out_port_params.format.video.eColorFormat;
+++                s->dec_out_width = out_port_params.format.video.nFrameWidth;
+++                s->dec_out_height = out_port_params.format.video.nFrameHeight;
+++                s->dec_pix_fmt = out_port_params.format.video.eColorFormat;
++ 
++-                av_log(s->avctx, AV_LOG_VERBOSE, "w:%d, h:%d, fmt:%d\n", dec_out_width, dec_out_height, dec_pix_fmt); 
+++                av_log(s->avctx, AV_LOG_VERBOSE, "w:%d, h:%d, fmt:%d\n", s->dec_out_width, s->dec_out_height, s->dec_pix_fmt); 
++                 if (!s->num_out_buffers) {
++                     s->num_out_buffers = out_port_params.nBufferCountActual;
++                     s->out_buffer_headers = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
++@@ -511,7 +510,7 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, O
++         break;
++     case OMX_EventBufferFlag:
++         av_log(s->avctx, AV_LOG_VERBOSE, "OMX decoder competd set event_bufferflag\n");
++-        evnet_bufferflag = 1;
+++        s->evnet_bufferflag = 1;
++     default:
++         av_log(s->avctx, AV_LOG_VERBOSE, "OMX event %d %"PRIx32" %"PRIx32"\n",
++                                          event, (uint32_t) data1, (uint32_t) data2);
++@@ -1306,7 +1305,7 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++             /*eos is sent wait for vpu evnet_bufferflag to get all frames
++               mjpeg: sent a frame, then wait for a decoder frame 
++             */
++-            if((s->eos_sent && !evnet_bufferflag) || (avctx->codec_id == AV_CODEC_ID_MJPEG )) {
+++            if((s->eos_sent && !s->evnet_bufferflag) || (avctx->codec_id == AV_CODEC_ID_MJPEG )) {
++                 continue; 
++             }
++             break;
++@@ -1326,9 +1325,9 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++             goto end;
++         }
++ 
++-        avctx->width = dec_out_width;
++-        avctx->height = dec_out_height;
++-        avctx->pix_fmt = omx_map_color_format(avctx, dec_pix_fmt);
+++        avctx->width = s->dec_out_width;
+++        avctx->height = s->dec_out_height;
+++        avctx->pix_fmt = omx_map_color_format(avctx, s->dec_pix_fmt);
++         s->stride     = avctx->width;
++         s->plane_size = avctx->height;
++         
++-- 
++2.25.1
++

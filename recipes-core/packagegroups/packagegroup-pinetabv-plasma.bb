@@ -48,7 +48,6 @@ RDEPENDS:packagegroup-pinetabv-plasma = " \
     kirigami-addons \
     kmenuedit \
     konsole \
-    konqueror \
     kpipewire \
     kscreen \
     kscreenlocker \
@@ -64,6 +63,7 @@ RDEPENDS:packagegroup-pinetabv-plasma = " \
     liberation-fonts \
     mesa-demos \
     milou \
+    pinetabv-base-files \
     pipewire \
     pipewire-alsa \
     pipewire-alsa-card-profile \
@@ -120,6 +120,7 @@ RDEPENDS:packagegroup-pinetabv-plasma = " \
     plasma-welcome \
     polkit-kde-agent-1 \
     powerdevil \
+    refined-h264ify \
     sddm \
     sddm-kcm \
     systemd \

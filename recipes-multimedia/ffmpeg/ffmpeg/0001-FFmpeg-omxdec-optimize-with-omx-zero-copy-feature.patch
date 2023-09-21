@@ -1,0 +1,172 @@
+From 2a24a3a4ceb05307b065d50cd019515b6d0e2490 Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:14:39 +0800
+Subject: [PATCH] FFmpeg: omxdec: optimize with omx zero copy feature
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...-optimize-with-omx-zero-copy-feature.patch | 155 ++++++++++++++++++
+ 1 file changed, 155 insertions(+)
+ create mode 100644 package/ffmpeg/0022-omxdec-optimize-with-omx-zero-copy-feature.patch
+
+diff --git a/package/ffmpeg/0022-omxdec-optimize-with-omx-zero-copy-feature.patch b/package/ffmpeg/0022-omxdec-optimize-with-omx-zero-copy-feature.patch
+new file mode 100644
+index 0000000..76bb9a7
+--- /dev/null
++++ b/package/ffmpeg/0022-omxdec-optimize-with-omx-zero-copy-feature.patch
+@@ -0,0 +1,155 @@
++From 640ea14c3ca4536dce22a24153ac37d752009412 Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 11:38:04 +0800
++Subject: [PATCH 1/8] omxdec optimize with omx zero copy feature
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 63 ++++++++++++++++++++++++++++++++++-----------
++ 1 file changed, 48 insertions(+), 15 deletions(-)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index 1bb08b1..c518542 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -342,6 +342,8 @@ typedef struct OMXCodecContext {
++     pthread_cond_t input_cond;
++     pthread_mutex_t output_mutex;
++     pthread_cond_t output_cond;
+++    pthread_mutex_t disableEVnt_mutex;
+++    pthread_cond_t disableEVnt_cond;
++ 
++     pthread_mutex_t state_mutex;
++     pthread_cond_t state_cond;
++@@ -419,7 +421,7 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, O
++     OMX_PARAM_PORTDEFINITIONTYPE out_port_params = { 0 };
++     OMX_PORT_PARAM_TYPE video_port_params = { 0 };
++     OMX_ERRORTYPE err;
++-    int i;
+++    int i, num;
++ 
++     switch (event) {
++     case OMX_EventError:
++@@ -438,6 +440,11 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, O
++             pthread_mutex_unlock(&s->state_mutex);
++         } else if (data1 == OMX_CommandPortDisable) {
++             av_log(s->avctx, AV_LOG_VERBOSE, "OMX port %"PRIu32" disabled\n", (uint32_t) data2);
+++            if (data2 == 1) {
+++                pthread_mutex_lock(&s->disableEVnt_mutex);
+++                pthread_cond_broadcast(&s->disableEVnt_cond);
+++                pthread_mutex_unlock(&s->disableEVnt_mutex);
+++            }
++         } else if (data1 == OMX_CommandPortEnable) {
++             av_log(s->avctx, AV_LOG_VERBOSE, "OMX port %"PRIu32" enabled\n", (uint32_t) data2);
++         } else {
++@@ -470,6 +477,32 @@ static OMX_ERRORTYPE event_handler(OMX_HANDLETYPE component, OMX_PTR app_data, O
++                 dec_pix_fmt = out_port_params.format.video.eColorFormat;
++ 
++                 av_log(s->avctx, AV_LOG_VERBOSE, "w:%d, h:%d, fmt:%d\n", dec_out_width, dec_out_height, dec_pix_fmt); 
+++                if (!s->num_out_buffers) {
+++                    s->num_out_buffers = out_port_params.nBufferCountActual;
+++                    s->out_buffer_headers = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
+++                    s->done_out_buffers   = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
+++
+++                    if (!s->out_buffer_headers || !s->done_out_buffers)
+++                        return AVERROR(ENOMEM);
+++
+++                    OMX_SendCommand(s->handle, OMX_CommandPortEnable, 1, NULL);
+++
+++                    for (num = 0; num < s->num_out_buffers && err == OMX_ErrorNone; num++)
+++                        err = OMX_AllocateBuffer(s->handle, &s->out_buffer_headers[num], s->out_port, s, out_port_params.nBufferSize);
+++
+++                    if (err != OMX_ErrorNone) {
+++                        av_log(s->avctx, AV_LOG_ERROR,  "err %x (%d) on line %d\n", err, err, __LINE__);
+++                        return AVERROR_UNKNOWN;
+++                    }
+++                    s->num_out_buffers = num;
+++
+++                    for (num = 0; num < s->num_out_buffers && err == OMX_ErrorNone; num++)
+++                        err = OMX_FillThisBuffer(s->handle, s->out_buffer_headers[num]);
+++                    if (err != OMX_ErrorNone) {
+++                        for (; num < s->num_out_buffers; num++)
+++                            s->done_out_buffers[s->num_done_out_buffers++] = s->out_buffer_headers[num];
+++                    }
+++                }
++             } 
++         }
++         break;
++@@ -866,15 +899,18 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
++     CHECK(err);
++     err = OMX_GetParameter(s->handle, OMX_IndexParamPortDefinition, &out_port_params);
++     CHECK(err);
++-    s->num_out_buffers = out_port_params.nBufferCountActual;
+++
+++    OMX_SendCommand(s->handle, OMX_CommandPortDisable, 1, NULL);
+++    pthread_mutex_lock(&s->disableEVnt_mutex);
+++    pthread_cond_wait(&s->disableEVnt_cond, &s->disableEVnt_mutex);
+++    pthread_mutex_unlock(&s->disableEVnt_mutex);
++ 
++     err = OMX_SendCommand(s->handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
++     CHECK(err);
++     s->in_buffer_headers  = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_in_buffers);
++     s->free_in_buffers    = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_in_buffers);
++-    s->out_buffer_headers = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
++-    s->done_out_buffers   = av_mallocz(sizeof(OMX_BUFFERHEADERTYPE*) * s->num_out_buffers);
++-    if (!s->in_buffer_headers || !s->free_in_buffers || !s->out_buffer_headers || !s->done_out_buffers)
+++
+++    if (!s->in_buffer_headers || !s->free_in_buffers)
++         return AVERROR(ENOMEM);
++ 
++     for (i = 0; i < s->num_in_buffers && err == OMX_ErrorNone; i++) {
++@@ -887,10 +923,7 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
++     }
++     CHECK(err);
++     s->num_in_buffers = i;
++-    for (i = 0; i < s->num_out_buffers && err == OMX_ErrorNone; i++)
++-        err = OMX_AllocateBuffer(s->handle, &s->out_buffer_headers[i], s->out_port, s, out_port_params.nBufferSize);
++-    CHECK(err);
++-    s->num_out_buffers = i;
+++
++     if (wait_for_state(s, OMX_StateIdle) < 0) {
++         av_log(avctx, AV_LOG_ERROR, "Didn't get OMX_StateIdle\n");
++         return AVERROR_UNKNOWN;
++@@ -901,12 +934,7 @@ static av_cold int omx_component_init(AVCodecContext *avctx, const char *role)
++         av_log(avctx, AV_LOG_ERROR, "Didn't get OMX_StateExecuting\n");
++         return AVERROR_UNKNOWN;
++     }
++-    for (i = 0; i < s->num_out_buffers && err == OMX_ErrorNone; i++)
++-        err = OMX_FillThisBuffer(s->handle, s->out_buffer_headers[i]);
++-    if (err != OMX_ErrorNone) {
++-        for (; i < s->num_out_buffers; i++)
++-            s->done_out_buffers[s->num_done_out_buffers++] = s->out_buffer_headers[i];
++-    }
+++
++     for (i = 0; i < s->num_in_buffers; i++)
++         s->free_in_buffers[s->num_free_in_buffers++] = s->in_buffer_headers[i];
++     return err != OMX_ErrorNone ? AVERROR_UNKNOWN : 0;
++@@ -952,6 +980,8 @@ static av_cold void cleanup(OMXCodecContext *s)
++         pthread_mutex_destroy(&s->input_mutex);
++         pthread_cond_destroy(&s->output_cond);
++         pthread_mutex_destroy(&s->output_mutex);
+++        pthread_cond_destroy(&s->disableEVnt_cond);
+++        pthread_mutex_destroy(&s->disableEVnt_mutex);
++         s->mutex_cond_inited = 0;
++     }
++     OMXDecodeQueueDestory(&s->decode_pts_queue);
++@@ -984,6 +1014,8 @@ static av_cold int omx_decode_init(AVCodecContext *avctx)
++     pthread_cond_init(&s->input_cond, NULL);
++     pthread_mutex_init(&s->output_mutex, NULL);
++     pthread_cond_init(&s->output_cond, NULL);
+++    pthread_mutex_init(&s->disableEVnt_mutex, NULL);
+++    pthread_cond_init(&s->disableEVnt_cond, NULL);
++     s->mutex_cond_inited = 1;
++     s->avctx = avctx;
++     s->state = OMX_StateLoaded;
++@@ -1009,6 +1041,7 @@ static av_cold int omx_decode_init(AVCodecContext *avctx)
++ 
++     if ((ret = find_component(s->omx_context, avctx, role, s->component_name, sizeof(s->component_name))) < 0)
++         goto fail;
+++    strcat(s->component_name, ".internal");
++ 
++     av_log(avctx, AV_LOG_INFO, "Using %s\n", s->component_name);
++ 
++-- 
++2.25.1
++

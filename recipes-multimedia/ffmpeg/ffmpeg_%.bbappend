@@ -2,9 +2,15 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI:append:jh7110 = "\
     file://0002-add-Starfive-OMX-patches.patch \
+    file://0001-FFmpeg-omxdec-optimize-with-omx-zero-copy-feature.patch \
+    file://0002-FFmpeg-omxdec-add-output-buffers-release-callback-to.patch \
+    file://0003-FFmpeg-Omxdec-Fix-omx-decoder-fill-frames-pts-incorr.patch \
+    file://0004-FFmpeg-Omxdec-Fix-mjpg_omx-buffer-err.patch \
+    file://0005-FFmpeg-Omxdec-Add-flush-callback-of-sf-omx-decoder.patch \
+    file://0006-FFmpeg-Omxdec-Remove-the-global-variables-in-omxdec.patch \
+    file://0007-FFmpeg-Omxdec-no-longer-send-eos-when-processing-zer.patch \
+    file://0008-FFmpeg-Omxdec-optimize-buffer-method-for-mjpg-decode.patch \
 "
-#file://0001-fix-chromium.patch
- 
 
 EXTRA_OECONF:append = " \
     --enable-omx \

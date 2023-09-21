@@ -1,0 +1,51 @@
+From 59eab933575e0deb0ab95b1f6885b9323d710564 Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:16:39 +0800
+Subject: [PATCH] FFmpeg: Omxdec: Fix omx decoder fill frames pts incorrect
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...mx-decoder-fill-frames-pts-incorrect.patch | 34 +++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+ create mode 100644 package/ffmpeg/0024-Fix-omx-decoder-fill-frames-pts-incorrect.patch
+
+diff --git a/package/ffmpeg/0024-Fix-omx-decoder-fill-frames-pts-incorrect.patch b/package/ffmpeg/0024-Fix-omx-decoder-fill-frames-pts-incorrect.patch
+new file mode 100644
+index 0000000..4dbf13a
+--- /dev/null
++++ b/package/ffmpeg/0024-Fix-omx-decoder-fill-frames-pts-incorrect.patch
+@@ -0,0 +1,34 @@
++From e0e6de3a210675444850c826bf5611b8d29228bf Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 13:47:48 +0800
++Subject: [PATCH 3/8] Fix omx decoder fill frames pts incorrect
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 10 +++++++++-
++ 1 file changed, 9 insertions(+), 1 deletion(-)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index afcba9b..f71e4bf 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -1217,7 +1217,15 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++                                      pkt->size, pkt->pts, pkt->dts, pkt->duration);
++     av_log(avctx, AV_LOG_VERBOSE, "avctx->pts_correction_last_pts: %ld avctx->pts_correction_last_dts: %ld\n",
++                                      avctx->pts_correction_last_pts, avctx->pts_correction_last_dts);
++-    OMXDecodeQueuePush(&s->decode_pts_queue, pkt->dts);
+++    if (pkt->dts != AV_NOPTS_VALUE) {
+++        OMXDecodeQueuePush(&s->decode_pts_queue, pkt->dts);
+++    } else {
+++        if (OMXDecodeQueueEmpty(&s->decode_pts_queue)) {
+++            OMXDecodeQueuePush(&s->decode_pts_queue, 0);
+++        } else {
+++            OMXDecodeQueuePush(&s->decode_pts_queue, s->decode_pts_queue.tail->val + pkt->duration);
+++        }
+++    }
++     if (pkt->size) {
++ 
++         //VPU init and fill buffer slow, so empty buf sleep to send before get vpu fill buf.
++-- 
++2.25.1
++

@@ -1,0 +1,77 @@
+From 35d7d79f30dc91e48d7e29e0c72ab4f8229c4475 Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:21:58 +0800
+Subject: [PATCH] FFmpeg: Omxdec: no longer send eos when processing zero size
+ pkt
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...-send-eos-when-processing-zero-size-.patch | 59 +++++++++++++++++++
+ 1 file changed, 59 insertions(+)
+ create mode 100644 package/ffmpeg/0028-Omxdec-no-longer-send-eos-when-processing-zero-size-.patch
+
+diff --git a/package/ffmpeg/0028-Omxdec-no-longer-send-eos-when-processing-zero-size-.patch b/package/ffmpeg/0028-Omxdec-no-longer-send-eos-when-processing-zero-size-.patch
+new file mode 100644
+index 0000000..32b4643
+--- /dev/null
++++ b/package/ffmpeg/0028-Omxdec-no-longer-send-eos-when-processing-zero-size-.patch
+@@ -0,0 +1,59 @@
++From d9ac2081cfb04a0d519e9bf57b6b68d12eefadb0 Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 13:59:25 +0800
++Subject: [PATCH 7/8] Omxdec: no longer send eos when processing zero size pkt
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 28 +---------------------------
++ 1 file changed, 1 insertion(+), 27 deletions(-)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index aa3ddea..47fb482 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -1268,29 +1268,6 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++             av_log(avctx, AV_LOG_ERROR, "OMX_EmptyThisBuffer failed: %x\n", err);
++             return AVERROR_UNKNOWN;
++         }
++-    } else if (!s->eos_sent) {
++-
++-        // if(!s->first_get_outbuffer)
++-        // av_usleep(1000000);
++-        buffer = get_buffer(&s->input_mutex, &s->input_cond,
++-                            &s->num_free_in_buffers, s->free_in_buffers, 1);
++-
++-        if(!buffer) {
++-            av_log(avctx, AV_LOG_ERROR, "get_buffer NULL\n");
++-            return AVERROR(ENOMEM);
++-        }
++-
++-        buffer->nFilledLen = 0;
++-        buffer->nFlags = OMX_BUFFERFLAG_EOS;
++-        buffer->pAppPrivate = buffer->pOutputPortPrivate = NULL;
++-        
++-        err = OMX_EmptyThisBuffer(s->handle, buffer);
++-        if (err != OMX_ErrorNone) {
++-            append_buffer(&s->input_mutex, &s->input_cond, &s->num_free_in_buffers, s->free_in_buffers, buffer);
++-            av_log(avctx, AV_LOG_ERROR, "OMX_EmptyThisBuffer failed: %x\n", err);
++-            return AVERROR_UNKNOWN;
++-        }
++-        s->eos_sent = 1;
++     }
++ 
++     while (!*got_packet && ret == 0 && !s->got_eos) {
++@@ -1302,10 +1279,7 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++                             !pkt || had_partial);
++ 
++         if (!buffer) {
++-            /*eos is sent wait for vpu evnet_bufferflag to get all frames
++-              mjpeg: sent a frame, then wait for a decoder frame 
++-            */
++-            if((s->eos_sent && !s->evnet_bufferflag) || (avctx->codec_id == AV_CODEC_ID_MJPEG )) {
+++            if( avctx->codec_id == AV_CODEC_ID_MJPEG ) {
++                 continue; 
++             }
++             break;
++-- 
++2.25.1
++

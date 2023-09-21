@@ -33,7 +33,6 @@ RDEPENDS:packagegroup-star64-minimal = " \
     libgpiod-tools \
     bluez5 \
     u-boot-tools \
-    kernel-image-fitimage-initramfs \
     xz \
     usbutils \
     elfutils \
@@ -45,6 +44,9 @@ RDEPENDS:packagegroup-star64-minimal = " \
     cmake \
     meson \
     tree \
+    plymouth \
+    plymouth-themes \
+    linux-firmware-visionfive2-wave511 \
 "
 
 COMPATIBLE_MACHINE = "star64|pinetabv"

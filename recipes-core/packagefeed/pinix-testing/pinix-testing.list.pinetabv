@@ -1,1 +1,1 @@
-deb [signed-by=/etc/apt/trusted.gpg.d/pinix.gpg] https://pine64.my-ho.st:8443/ pinix-testing all riscv64 pinetabv
+deb [signed-by=/etc/apt/trusted.gpg.d/pinix.gpg] https://pine64.my-ho.st:8443/testing/ pinix-testing all riscv64 pinetabv

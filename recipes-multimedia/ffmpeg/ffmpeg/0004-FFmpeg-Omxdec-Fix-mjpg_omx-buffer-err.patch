@@ -1,0 +1,123 @@
+From b51388915b35d9bb4f9b75577d6ca05e76164900 Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:17:35 +0800
+Subject: [PATCH] FFmpeg: Omxdec: Fix mjpg_omx buffer err
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ .../0025-Omxdec-Fix-mjpg_omx-buffer-err.patch | 106 ++++++++++++++++++
+ 1 file changed, 106 insertions(+)
+ create mode 100644 package/ffmpeg/0025-Omxdec-Fix-mjpg_omx-buffer-err.patch
+
+diff --git a/package/ffmpeg/0025-Omxdec-Fix-mjpg_omx-buffer-err.patch b/package/ffmpeg/0025-Omxdec-Fix-mjpg_omx-buffer-err.patch
+new file mode 100644
+index 0000000..b3a3ec9
+--- /dev/null
++++ b/package/ffmpeg/0025-Omxdec-Fix-mjpg_omx-buffer-err.patch
+@@ -0,0 +1,106 @@
++From e3866de00ce3b6508c7636c9f96b1b1dfeab530a Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 13:50:10 +0800
++Subject: [PATCH 4/8] Omxdec: Fix mjpg_omx buffer err
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 77 ++++++++++++++++++++++++++++++++-------------
++ 1 file changed, 55 insertions(+), 22 deletions(-)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index f71e4bf..05e37d0 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -1329,33 +1329,66 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++         if (buffer->nFlags & OMX_BUFFERFLAG_EOS)
++             s->got_eos = 1;
++ 
++-        avframe->width  = avctx->width;
++-        avframe->height = avctx->height;
+++        if (avctx->codec->id == AV_CODEC_ID_HEVC ||
+++                avctx->codec->id == AV_CODEC_ID_H264) {
+++            avframe->width  = avctx->width;
+++            avframe->height = avctx->height;
+++
+++            ret = ff_decode_frame_props(avctx, avframe);
+++            if(ret < 0) {
+++                av_log(avctx, AV_LOG_ERROR, "Unable to fill buffer props\n");
+++                goto end;
+++            }
++ 
++-        ret = ff_decode_frame_props(avctx, avframe);
++-        if(ret < 0) {
++-            av_log(avctx, AV_LOG_ERROR, "Unable to fill buffer props\n");
++-            goto end;
++-        }
+++            ret = omx_buf_to_swframe(s, avframe, buffer);
+++            if(ret < 0) {
+++                av_log(avctx, AV_LOG_ERROR, "Unable to alloce frame\n");
+++                goto end;
+++            }
++ 
++-        ret = omx_buf_to_swframe(s, avframe, buffer);
++-        if(ret < 0) {
++-            av_log(avctx, AV_LOG_ERROR, "Unable to alloce frame\n");
++-            goto end;
++-        }
+++            if (pkt->pts) {
+++                if (OMXDecodeQueueEmpty(&s->decode_pts_queue) != 0){
+++                    av_log(avctx, AV_LOG_ERROR, "The queue of decode pts is empty.\n");
+++                    return AVERROR_INVALIDDATA;
+++                }
+++                avframe->pts = OMXDecodeQueueFront(&s->decode_pts_queue);
+++                OMXDecodeQueuePop(&s->decode_pts_queue);
+++            }
+++            s->decode_flag += 1;
+++            *got_packet = 1;
++ 
++-        if (pkt->pts) {
++-            if (OMXDecodeQueueEmpty(&s->decode_pts_queue) != 0){
++-                av_log(avctx, AV_LOG_ERROR, "The queue of decode pts is empty.\n");
++-                return AVERROR_INVALIDDATA;
+++            return ret;
+++
+++        } else if (avctx->codec->id == AV_CODEC_ID_MPEG4 ||
+++        avctx->codec->id == AV_CODEC_ID_MJPEG) {
+++
+++            uint8_t *dst[4];
+++            int linesize[4];
+++			if ((ret = ff_get_buffer(avctx, avframe, 0)) < 0) {
+++                av_log(avctx, AV_LOG_ERROR, "Unable to allocate buffer\n");
+++                goto end;
+++            }
+++
+++            ret = av_image_fill_arrays(dst, linesize, buffer->pBuffer,
+++                                   avctx->pix_fmt, s->stride, s->plane_size, 1);
+++            if (ret < 0){
+++                av_log(avctx, AV_LOG_ERROR, "av_image_fill_arrays ret:%d\n", ret);
+++                goto end;
++             }
++-            avframe->pts = OMXDecodeQueueFront(&s->decode_pts_queue);
++-            OMXDecodeQueuePop(&s->decode_pts_queue);
++-        }
++-        s->decode_flag += 1;
++-        *got_packet = 1;
++ 
++-        return ret;
+++            av_image_copy(avframe->data, avframe->linesize, (const uint8_t**)dst, linesize, 
+++                                avctx->pix_fmt, avctx->width, avctx->height);
+++            if (pkt->pts) {
+++                if (OMXDecodeQueueEmpty(&s->decode_pts_queue) != 0){
+++                    av_log(avctx, AV_LOG_ERROR, "The queue of decode pts is empty.\n");
+++                    return AVERROR_INVALIDDATA;
+++                }
+++                avframe->pts = OMXDecodeQueueFront(&s->decode_pts_queue);
+++                OMXDecodeQueuePop(&s->decode_pts_queue);
+++            }
+++            s->decode_flag += 1;
+++            *got_packet = 1;
+++        }
++ 
++ end:     
++         err = OMX_FillThisBuffer(s->handle, buffer);
++-- 
++2.25.1
++

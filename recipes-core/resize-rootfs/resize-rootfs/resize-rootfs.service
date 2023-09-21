@@ -1,0 +1,13 @@
+[Unit]
+Description=Resize RootFS
+ConditionPathExists=!/etc/.rootfsresized
+DefaultDependencies=no
+After=systemd-remount-fs.service plymouth-start.service
+Before=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/resize-rootfs.sh
+
+[Install]
+WantedBy=sysinit.target

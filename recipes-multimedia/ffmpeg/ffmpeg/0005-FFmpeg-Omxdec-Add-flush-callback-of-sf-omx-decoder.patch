@@ -1,0 +1,105 @@
+From 1a5884d35661faa535a438317bb5ca204245529e Mon Sep 17 00:00:00 2001
+From: Som Qin <som.qin@starfivetech.com>
+Date: Fri, 4 Aug 2023 14:18:25 +0800
+Subject: [PATCH] FFmpeg: Omxdec: Add flush callback of sf omx decoder
+
+Signed-off-by: Som Qin <som.qin@starfivetech.com>
+---
+ ...Add-flush-callback-of-sf-omx-decoder.patch | 88 +++++++++++++++++++
+ 1 file changed, 88 insertions(+)
+ create mode 100644 package/ffmpeg/0026-Omxdec-Add-flush-callback-of-sf-omx-decoder.patch
+
+diff --git a/package/ffmpeg/0026-Omxdec-Add-flush-callback-of-sf-omx-decoder.patch b/package/ffmpeg/0026-Omxdec-Add-flush-callback-of-sf-omx-decoder.patch
+new file mode 100644
+index 0000000..ec4bafe
+--- /dev/null
++++ b/package/ffmpeg/0026-Omxdec-Add-flush-callback-of-sf-omx-decoder.patch
+@@ -0,0 +1,88 @@
++From b8af55868ea8b2b68ef06fee2eb8a19b16fdb79d Mon Sep 17 00:00:00 2001
++From: Som Qin <som.qin@starfivetech.com>
++Date: Fri, 4 Aug 2023 13:53:57 +0800
++Subject: [PATCH 5/8] Omxdec: Add flush callback of sf omx decoder
++
++Signed-off-by: Som Qin <som.qin@starfivetech.com>
++---
++ libavcodec/omxdec.c | 22 ++++++++++++++++++++++
++ 1 file changed, 22 insertions(+)
++
++diff --git a/libavcodec/omxdec.c b/libavcodec/omxdec.c
++index 05e37d0..d268454 100755
++--- a/libavcodec/omxdec.c
+++++ b/libavcodec/omxdec.c
++@@ -365,6 +365,7 @@ typedef struct OMXCodecContext {
++     OMX_U32 scale_height;
++     OMX_U32 rotation;
++     OMX_U32 mirror;
+++    OMX_U32 skip;
++     char *crop_expr;
++     struct {
++         int x;
++@@ -1310,6 +1311,11 @@ static int omx_decode_frame(AVCodecContext *avctx, void *data,
++             }
++             break;
++         }
+++
+++        if(s->skip) {
+++            s->skip--;
+++            goto end;
+++        }
++         //if (!buffer)
++            // break;
++         // if(!s->first_get_outbuffer)
++@@ -1401,6 +1407,18 @@ end:
++     return ret;
++ }
++ 
+++static void omx_decode_flush(AVCodecContext *avctx)
+++{
+++    OMXCodecContext *s = avctx->priv_data;
+++
+++    av_log(avctx, AV_LOG_VERBOSE, "Flushing buffer\n");
+++
+++    while(!OMXDecodeQueueEmpty(&s->decode_pts_queue)) {
+++        OMXDecodeQueuePop(&s->decode_pts_queue);
+++        s->skip++;
+++    }
+++}
+++
++ static av_cold int omx_decode_end(AVCodecContext *avctx)
++ {
++     OMXCodecContext *s = avctx->priv_data;
++@@ -1465,6 +1483,7 @@ AVCodec ff_mpeg4_omx_decoder = {
++     .init             = omx_decode_init,
++     .decode           = omx_decode_frame,
++     .close            = omx_decode_end,
+++    .flush            = omx_decode_flush,
++     .capabilities     = AV_CODEC_CAP_DELAY,
++     .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++     .priv_class       = &omx_mpeg4dec_class,
++@@ -1485,6 +1504,7 @@ AVCodec ff_h264_omx_decoder = {
++     .init             = omx_decode_init,
++     .decode           = omx_decode_frame,
++     .close            = omx_decode_end,
+++    .flush            = omx_decode_flush,
++     .capabilities     = AV_CODEC_CAP_DELAY,
++     .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++     .priv_class       = &omx_h264dec_class,
++@@ -1506,6 +1526,7 @@ AVCodec ff_hevc_omx_decoder = {
++     .init             = omx_decode_init,
++     .decode           = omx_decode_frame,
++     .close            = omx_decode_end,
+++    .flush            = omx_decode_flush,
++     .profiles         = NULL_IF_CONFIG_SMALL(ff_hevc_profiles),
++     .capabilities     = AV_CODEC_CAP_DELAY,
++     .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++@@ -1528,6 +1549,7 @@ AVCodec ff_mjpeg_omx_decoder = {
++     .init             = omx_decode_init,
++     .decode           = omx_decode_frame,
++     .close            = omx_decode_end,
+++    .flush            = omx_decode_flush,
++     .capabilities     = AV_CODEC_CAP_DR1,
++     .max_lowres       = 3,
++     .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
++-- 
++2.25.1
++
