@@ -50,11 +50,15 @@ do
 	if [ ! -d layers/$layer/.git ]
 	then
 		echo "Cloning $layer"
-		git clone -q $repo layers/$layer && cd layers/$layer && git checkout -q $branch  && git checkout -q $srcrev && cd ../..
+		git clone -q $repo layers/$layer && cd layers/$layer
+                git checkout -q $branch  && git checkout -q $srcrev
+                cd ../..
 	else
 		if [ $NOSYNC -eq 0 ]; then
 			echo "Updating $layer to $srcrev"
-			cd layers/$layer && git fetch -q && git checkout -q $branch && git checkout -q $srcrev && cd ../..
+			cd layers/$layer
+                        git fetch -q && git checkout -q $branch && git checkout -q $srcrev
+                        cd ../..
 		fi
 	fi
 done
